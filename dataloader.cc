@@ -6,7 +6,24 @@ namespace s21{
 
 void DataLoader::DisplayMatrices() {
     for(const auto&[k, v] : data_){
-        std::cout << "Letter is: " << static_cast<char>('a' + k) << std::ednl;
+        std::cout << "Letter is: " << static_cast<char>('a' + k) << std::endl;
+        for(const auto &val: v){
+            for(int i = 0; i < 28; ++i){
+                for(int j = 0; j < 28; ++j){
+                    std::cout << val[i * 28 + j] << " ";
+                }
+                std::cout << std::endl;
+            }
+        }
+    }
+}
+
+void DataLoader::CreateSample(unsigned tests_per_letter){
+    sample_.clear();
+    for(size_t i = 0; i < tests_per_letter; ++i){
+        for(size_t j = 0; j < 26; ++j){
+            sample_[j].push_back(data_[j][i]);
+        }
     }
 }
 
@@ -31,6 +48,8 @@ void DataLoader::FileToData(Mode mode)
     }
     file.close(); // probably not needed because of destructor
 }
+
+
 
 }
 

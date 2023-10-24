@@ -15,8 +15,6 @@ Net::Net(const std::vector<unsigned> &topology) //first layer is always 28 x 28,
         layers_.emplace_back();
         for(unsigned n = 0; n < t; ++n){
             layers_.back().emplace_back();
-            layers_.back()[n].my_index_ = n;
-            layers_.back()[n].bias_ = 0;
             for(unsigned v = 0; layers_.size() != 1 && v < topology[layers_.size() - 2]; ++v){
                 layers_.back()[n].weights_.emplace_back(distribution(generator));
             }
@@ -37,13 +35,11 @@ void Net::FeedNet(const std::vector<double> &input) {
             double weighted_sum = 0; //sum of Wi *Xi + bias
             for(size_t prev_layer_ni = 0; prev_layer_ni < layers_[curr_layer-1].size(); ++prev_layer_ni){
                 weighted_sum += layers_[curr_layer - 1][prev_layer_ni].output_value_ * neuron.weights_[prev_layer_ni];
-            }
+            } //inner product in other terms. can be replaced with W.transposed * x if switch to matrixes ever happens
             neuron.output_value_ = ActivationFunction::Activate(weighted_sum);
         }
     }
-//    for(size_t i = 0; i< layers_.back().size(); ++i){
-//        std::cout << "weight for letter " << static_cast<char>('a' + i) << "is " << layers_.back()[i].output_value_ << std::endl;
-//    }
+
 }
 
 void Net::BackProp(unsigned result) {
@@ -65,23 +61,48 @@ void Net::BackProp(unsigned result) {
 #endif
     }
 
-    for (size_t layer = layers_.size() - 1; layer > 0; --layer) {
+    for (size_t layer = layers_.size() - 2; layer > 0; --layer) {
         for (size_t i = 0; i < layers_[layer].size(); ++i) {
             Neuron& neuron = layers_[layer][i];
             double weighted_sum = 0.0;
 
-            for(size_t j = 0; j < layers_[layer - 1].size(); ++j){
-                weighted_sum += neuron.weights_[j] * layers_[layer - 1][j].error_;
+            for(size_t j = 0; j < layers_[layer + 1].size(); ++j){
+//                weighted_sum += neuron.weights_[j] * layers_[layer + 1][j].error_;
+                weighted_sum += layers_[layer + 1][j].weights_[i] * layers_[layer + 1][j].error_;
             }
 
             neuron.error_ = weighted_sum * ActivationFunction::ActivateDerivative(neuron.output_value_);
-            for(size_t j = 0; j < neuron.weights_.size(); ++j){
-                neuron.weights_[j] += layers_[layer - 1][j].output_value_ * neuron.error_ * eta;
+        }
+
+        }
+        UpdateWeights();
+    }
+
+    void Net::UpdateWeights(){
+        for(size_t layer = 1; layer <layers_.size(); ++layer){
+            for(size_t n = 0; n < layers_[layer].size(); ++n){
+                Neuron& neuron = layers_[layer][n];
+                for(size_t p_layer_n = 0; p_layer_n < layers_[layer - 1].size(); ++p_layer_n){
+                    neuron.weights_[p_layer_n] += neuron.error_ * layers_[layer - 1][p_layer_n].output_value_ * eta;
+                    //gradient * lr
+                }
+                //neuron.bias_ += eta * neuron.error_;
             }
         }
-
-        }
-
     }
+
+    char Net::GetResult(const std::vector<double>& input){
+        FeedNet(input);
+        double max_value = 10;
+        size_t ind;
+        for(size_t i = 0; i< layers_.back().size(); ++i){
+            if(layers_.back()[i].output_value_ < max_value){
+                max_value = layers_.back()[i].output_value_;
+                ind = i;
+            }
+        }
+        return static_cast<char>('a' + ind);
+    }
+
 
 }
