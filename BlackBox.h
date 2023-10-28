@@ -6,11 +6,11 @@
 #include <algorithm>
 #include "ActivationFunction.h"
 #include <iostream>
-#define __ABOBA_DEBUG_
+//#define __ABOBA_DEBUG_
 
 
 namespace s21{
-static double eta = 0.25;
+static double eta = 0.2;
 static double lambda = 0.001;
 class Neuron;
 using Layer = std::vector<Neuron>;

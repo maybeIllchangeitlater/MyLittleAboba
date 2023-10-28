@@ -83,7 +83,10 @@ void Net::BackProp(unsigned result) {
             for(size_t n = 0; n < layers_[layer].size(); ++n){
                 Neuron& neuron = layers_[layer][n];
                 for(size_t p_layer_n = 0; p_layer_n < layers_[layer - 1].size(); ++p_layer_n){
-                    neuron.weights_[p_layer_n] += neuron.error_ * layers_[layer - 1][p_layer_n].output_value_ * eta;
+//                    neuron.weights_[p_layer_n] += neuron.error_ * layers_[layer - 1][p_layer_n].output_value_ * eta;
+                    neuron.weights_[p_layer_n] += (neuron.error_ * layers_[layer - 1][p_layer_n].output_value_
+                            - lambda * neuron.weights_[p_layer_n]) * eta;
+                    //i want to add penalty to loss function to avoid shock data/white noize
                     //gradient * lr
                 }
                 //neuron.bias_ += eta * neuron.error_;
