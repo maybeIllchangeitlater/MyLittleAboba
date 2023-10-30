@@ -1,4 +1,5 @@
 #include "MLP.h"
+#include <algorithm>
 
 namespace s21{
 
@@ -9,7 +10,9 @@ namespace s21{
         for(size_t i = 0; i < topology_.size(); ++i){
             if(i != (topology_.size() - 1))
                 //initialize layer weights with small random values using Xavier initialization
-                layers_.emplace_back(S21Matrix(topology_[i], topology_[i + 1], gen_, 0.0, (1.0/std::sqrt(topology_[i] * topology_[i + 1]))));
+                //biases are 0s
+                layers_.emplace_back(S21Matrix(topology_[i], topology_[i + 1], gen_, 0.0, (2.0/std::sqrt(topology_[i] * topology_[i + 1]))),
+                                     S21Matrix(1, topology_[i + 1]));
                 //2.0/ might be better for sigmoid
             else
                 layers_.emplace_back();
@@ -22,7 +25,8 @@ namespace s21{
         //first layer is input as is
         for(size_t i = 0; i < layers_.size() - 1; ++i){
             layers_[i + 1].outputs_ = layers_[i].activated_outputs_ * layers_[i].weights_;
-            //Zi+1 = ai * Wi
+            layers_[i + 1].outputs_ += layers_[i].biases_;
+            //Zi+1 = ai * Wi + bi
             if(i < layers_.size() - 2)
                 layers_[i + 1].activated_outputs_ = layers_[i + 1].outputs_.ForEach(AF::Sigmoid);
                 //a = activ(Z)
@@ -49,49 +53,72 @@ namespace s21{
             //dW = a.T * dZ
             weight_gradients *= lr_;
             layers_[i].weights_ -= weight_gradients;
+            auto tmp = layers_[i].error_ * lr_;
+            layers_[i].biases_ -= tmp;
         }
     }
 
-//    std::pair<size_t, double> MLP::GetPrediction(const Mx& in){
-//        FeedForward(in);
-//        for(size_t i = 0; i < layers_.back().size(); ++i){
-//
+    double MLP::GetAccuracy(const Mx& ideal){
+        return (layers_.back().activated_outputs_ - ideal).ForEach([](double x){return std::fabs(x);}).Sum()/26.0;
+    }
+
+    bool MLP::Predict(const std::pair<S21Matrix, S21Matrix>& in){
+//        for(int r = 0; r < 28; ++r) {
+//            for (int c = 0; c < 28; ++c){
+//                std::cout << in.second(0 , r*28 + c) << " ";
+//            }
+//            std::cout << std::endl;
 //        }
-//    }
-    void MLP::Debug(const Mx &ideal) {
-        for (size_t i = 0; i < ideal.GetCols(); ++i) {
+        FeedForward(in.second);
+        return Debug(in.first);
+    }
+
+    bool MLP::Debug(const Mx &ideal) {
+        size_t i = 0;
+        for (; i < ideal.GetCols(); ++i) {
             if (ideal(0, i)) {
-                std::cout << "Letter is: " << static_cast<char>('a' + i) << "\t";
+//                std::cout << "Letter is: " << static_cast<char>('a' + i) << "\t";
                 break;
             }
         }
+        size_t ans = GetAnswer();
+//        std::cout << "Preceptron thinks it is: " << static_cast<char>('a' + ans) << "\n Accuracy is: " <<
+//        GetAccuracy(ideal) << std::endl;
+        return ans == i;
+    }
+
+    size_t MLP::GetAnswer(){
         double max = 0.0;
         size_t max_i = 0;
-        for (size_t i = 0; i < ideal.GetCols(); ++i) {
+        for (size_t i = 0; i < layers_.back().activated_outputs_.GetCols(); ++i) {
             if(max < layers_.back().activated_outputs_(0, i)){
                 max = layers_.back().activated_outputs_(0, i);
                 max_i = i;
             }
         }
-        std::cout << "Preceptron thinks it is: " << static_cast<char>('a' + max_i) << std::endl;
+        return max_i;
     }
 
     void MLP::GradientDescent(size_t epochs, size_t batch_size, double lr_reduction){
+        average_error_ = 0;
+        average_error_old_ = 0;
         batch_size = std::min(batch_size, dl_.MaximumTests());
         std::uniform_int_distribution<size_t> dist(0, dl_.MaximumTests() - batch_size);
+        auto batch = dl_.CreateSample(batch_size, dist(gen_));
         for(size_t e = 0; e < epochs; ++e){
-            auto batch = dl_.CreateSample(batch_size, dist(gen_));
+//            auto batch = dl_.CreateSample(batch_size, dist(gen_));
+            std::shuffle(batch.begin(), batch.end(), gen_);
             for(int i = 0; i < batch_size; ++i){
                 FeedForward(batch[i].second);
                 BackPropogation(batch[i].first);
-                if(((i + 1 )% 10 == 0)) { Debug(batch[i].first);
-                    for(int r = 0; r < 28; ++r) {
-                        for (int c = 0; c < 28; ++c){
-                            std::cout << batch[i].second(0 , r*28 + c) << " ";
-                        }
-                        std::cout << std::endl;
-                    }
+                if(!e) { //check how accuracy changes for when preceptron first time sees the batch
+                    average_error_ += GetAccuracy(batch[i].first);
                 }
+            }
+            if(!e) {
+                average_error_ = average_error_/26.0;
+                std::cout << "average layer error is " << average_error_ << std::endl;
+                average_error_ = 0;
             }
             lr_ -= lr_reduction;
         }

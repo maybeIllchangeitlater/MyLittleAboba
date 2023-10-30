@@ -15,11 +15,19 @@ namespace s21 {
         using AF = ActivationFunction;
 
         explicit MLP(const std::vector<size_t>& topology, s21::DataLoader &dl, double lr);
-        std::pair<size_t, double> GetPrediction(const Mx& in);
+
         void GradientDescent(size_t epochs = 1, size_t batch_size = 125, double lr_reduction = 0.0);
 
+        bool Predict(const std::pair<S21Matrix, S21Matrix>& in);
+
+        void AdjustLr(double reduction) { lr_ -=reduction;}
+
     private:
-        void Debug(const Mx& ideal);
+        bool Debug(const Mx& ideal);
+
+        size_t GetAnswer();
+
+        double GetAccuracy(const Mx& ideal);
 
         void FeedForward(const Mx &in);
 
@@ -32,6 +40,8 @@ namespace s21 {
         s21::DataLoader& dl_;
         std::mt19937 gen_;
         double lr_;
+        double average_error_; //smaller better
+        double average_error_old_;
 
     };
 }

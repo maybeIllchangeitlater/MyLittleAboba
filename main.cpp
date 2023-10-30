@@ -4,8 +4,49 @@
 
 int main() {
     s21::DataLoader d(784, 26);
-    s21::MLP biba(std::vector<size_t>({784, 784, 400, 200, 26}), d, 0.1);
-    biba.GradientDescent(10, 250, 0.01);
+    d.FileToData(s21::DataLoader::kTest, true);
+    auto test_data = d.Data();
+    std::uniform_int_distribution<size_t> dist(0, d.MaximumTests() - 26);
+
+    d.FileToData(s21::DataLoader::kTrain, true);
+    std::random_device rd;
+    std::mt19937 gen(rd());
+
+    s21::MLP biba(std::vector<size_t>({784, 240, 84,  26, 26}), d, 0.03);
+    for(int i = 0; i <30; ++i) {
+        if(i == 13) biba.AdjustLr(0.003);
+        if(i == 16) biba.AdjustLr(0.007);
+        if(i == 19) biba.AdjustLr(0.005);
+        if(i == 22) biba.AdjustLr(0.001);
+        if(i == 25) biba.AdjustLr(0.0005);
+        biba.GradientDescent(150, 150);
+        auto batch = d.CreateSample(200, dist(gen));
+        size_t correct = 0;
+        for (const auto &p: batch) {
+            correct += biba.Predict(p);
+        }
+        std::cout << "correctly guessed " << correct << "out of " << batch.size() << " examples" << std::endl;
+    }
+    ///test
+    std::cout << "it's testing time" << std::endl;
+//    std::random_device rd; // obtain a random number from hardware
+//    std::mt19937 gen(rd()); // seed the generator
+
+    d.FileToData(s21::DataLoader::kTest, true);
+    auto & test = d.Data();
+    size_t correct = 0;
+    for(const auto& p : test){
+        correct += biba.Predict(p);
+    }
+    std::cout << "correctly guessed " << correct << "out of " << d.MaximumTests() <<" examples" << std::endl;
+
+
+    ///correctly guessed 7382out of 14800 examples
+    ///784, 150, 26, 26 topology
+    ///0.03 lr
+    ///8 batches 100 epochs 150 size
+
+    ///remove 2 more
 //    s21::MyLittleAboba(sample, )
 //    std::random_device rd;
 //    std::mt19937 gen(rd());
