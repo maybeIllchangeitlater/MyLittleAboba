@@ -75,7 +75,7 @@ namespace s21{
 
     bool MLP::Debug(const Mx &ideal) {
         size_t i = 0;
-        for (; i < ideal.GetCols(); ++i) {
+        for (; i < ideal.Cols(); ++i) {
             if (ideal(0, i)) {
 //                std::cout << "Letter is: " << static_cast<char>('a' + i) << "\t";
                 break;
@@ -90,7 +90,7 @@ namespace s21{
     size_t MLP::GetAnswer(){
         double max = 0.0;
         size_t max_i = 0;
-        for (size_t i = 0; i < layers_.back().activated_outputs_.GetCols(); ++i) {
+        for (size_t i = 0; i < layers_.back().activated_outputs_.Cols(); ++i) {
             if(max < layers_.back().activated_outputs_(0, i)){
                 max = layers_.back().activated_outputs_(0, i);
                 max_i = i;

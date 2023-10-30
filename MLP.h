@@ -1,7 +1,7 @@
 #ifndef MULTILAYERABOBATRON_MLP_H
 #define MULTILAYERABOBATRON_MLP_H
 
-//#include "s21_matrix_oop.h"
+#include "mlp_matrix.h"
 //#include "vector"
 #include "ActivationFunction.h"
 #include "MLayer.h"

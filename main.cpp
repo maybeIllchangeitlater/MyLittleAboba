@@ -12,14 +12,9 @@ int main() {
     std::random_device rd;
     std::mt19937 gen(rd());
 
-    s21::MLP biba(std::vector<size_t>({784, 240, 84,  26, 26}), d, 0.03);
-    for(int i = 0; i <30; ++i) {
-        if(i == 13) biba.AdjustLr(0.003);
-        if(i == 16) biba.AdjustLr(0.007);
-        if(i == 19) biba.AdjustLr(0.005);
-        if(i == 22) biba.AdjustLr(0.001);
-        if(i == 25) biba.AdjustLr(0.0005);
-        biba.GradientDescent(150, 150);
+    s21::MLP biba(std::vector<size_t>({784, 150, 26, 26}), d, 0.03);
+    for(int i = 0; i < 8; ++i) {
+        biba.GradientDescent(100, 150);
         auto batch = d.CreateSample(200, dist(gen));
         size_t correct = 0;
         for (const auto &p: batch) {
