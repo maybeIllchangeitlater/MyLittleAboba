@@ -48,9 +48,13 @@ public:
      */
     std::vector<std::pair<Matrix, Matrix>> CreateSample(size_t batch_size = 125, size_t start_from = 0,Mode mode = kTrain, bool shuffle = false);
     /**
-     * @brief Get maximum possible amount of tests from dataset
+     * @brief Get maximum possible amount of samples from learning dataset
      */
     size_t MaximumTests() const noexcept {return data_.size();}
+    /**
+     * @brief Get maximum possible amount of samples from testing dataset
+     */
+    size_t MaximumTestsTests() const noexcept { return test_data_.size(); }
     size_t Inputs() const noexcept { return in_; }
     size_t Outputs() const noexcept { return out_; }
 private:

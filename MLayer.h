@@ -3,13 +3,12 @@
 #include "s21_matrix_oop.h"
 namespace s21 {
     struct MLayer {
+        MLayer() = default;
         MLayer(S21Matrix &&weights, S21Matrix&& biases) : weights_(std::move(weights)), biases_(std::move(biases)) {}
         MLayer(const MLayer&) = default;
         MLayer(MLayer&&) = default;
-        MLayer &operator=(MLayer&&) = default;
         MLayer &operator=(const MLayer&) = default;
-
-        MLayer() = default;
+        MLayer &operator=(MLayer&&) = default;
 
         S21Matrix weights_;
         S21Matrix biases_;
