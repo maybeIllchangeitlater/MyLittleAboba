@@ -1,44 +1,88 @@
 #include <iostream>
 #include "MLP.h"
-
+#include "TrainingGround.h"
+//#include "s21_matrix_oop.h"
 
 int main() {
     s21::DataLoader d(784, 26);
-    d.FileToData(s21::DataLoader::kTest, true);
-    auto test_data = d.Data();
-    std::uniform_int_distribution<size_t> dist(0, d.MaximumTests() - 26);
+    d.FileToData("/Users/monke/Biba/emnist-letters/emnist-letters-train.csv", s21::DataLoader::kTrain);
+    d.FileToData("/Users/monke/Biba/emnist-letters/emnist-letters-test.csv", s21::DataLoader::kTest);
+    s21::TrainingConfig conf;
 
-    d.FileToData(s21::DataLoader::kTrain, true);
-    std::random_device rd;
-    std::mt19937 gen(rd());
+    conf.load = false;
+    conf.winner_savepath = "/Users/monke/Biba/";
+    conf.topologies.push_back({784, 150, 26, 26});
+    conf.topologies.push_back({784, 150, 26, 26});
+    conf.topologies.push_back({784, 150, 26, 26});
+    conf.batch_sizes.emplace_back(150);
+    conf.batch_sizes.emplace_back(150);
+    conf.batch_sizes.emplace_back(150);
+    conf.batch_iterations.emplace_back(100);
+    conf.batch_iterations.emplace_back(100);
+    conf.batch_iterations.emplace_back(100);
+    conf.epochs.emplace_back(8);
+    conf.epochs.emplace_back(9);
+    conf.epochs.emplace_back(9);
+    conf.learning_rates.emplace_back(0.03, std::make_pair(0.0, 0));
+    conf.learning_rates.emplace_back(0.03, std::make_pair(0.003, 3));
+    conf.learning_rates.emplace_back(0.03, std::make_pair(0.002, 3));
+    conf.preceptron_counter = 3;
 
-    s21::MLP biba(std::vector<size_t>({784, 240, 84,  26, 26}), d, 0.03);
-    for(int i = 0; i <30; ++i) {
-        if(i == 13) biba.AdjustLr(0.003);
-        if(i == 16) biba.AdjustLr(0.007);
-        if(i == 19) biba.AdjustLr(0.005);
-        if(i == 22) biba.AdjustLr(0.001);
-        if(i == 25) biba.AdjustLr(0.0005);
-        biba.GradientDescent(150, 150);
-        auto batch = d.CreateSample(200, dist(gen));
-        size_t correct = 0;
-        for (const auto &p: batch) {
-            correct += biba.Predict(p);
-        }
-        std::cout << "correctly guessed " << correct << "out of " << batch.size() << " examples" << std::endl;
+    s21::TrainingGround OnlyTheStrongestWillSurvive(conf, d);
+    OnlyTheStrongestWillSurvive.Train();
+    for(const auto& w: OnlyTheStrongestWillSurvive.correctness_counter){
+        std::cout << w << " ";
     }
+//    std::cout << OnlyTheStrongestWillSurvive.correctness_counter[0] << " vs " << OnlyTheStrongestWillSurvive.correctness_counter[1];
+
+
+
+//    s21::MLP aboba(&d);
+//    std::fstream loadfile("/Users/monke/Biba/784_150_26_26_corr_6847.txt");
+//    loadfile >> aboba;
+//    std::vector<size_t> topology({784, 150, 26, 26});
+//    s21::MLP aboba(topology, &d, 0.03);
+//    aboba.GradientDescent(8);
+//    aboba.Test();
+//    std::cout << aboba.CorrectAnswers(); //6847
+//    std::string path("/Users/monke/Biba/784_150_26_26_corr_");
+//    path += std::to_string(aboba.CorrectAnswers()) + ".txt";
+//    std::fstream file(path.c_str(), std::ios_base::out);
+//    file << aboba;
+    ///change dataloader to load both train and test
+    ///add multithreading and mutex to dataloader's data
+    ///add MLP breeding ground where little MLPs compete for chance of being less retarded
+    ///(join, check best performer, save it)
+//    d.FileToData(s21::DataLoader::kTest, true);
+//    auto test_data = d.Data();
+//    std::uniform_int_distribution<size_t> dist(0, d.MaximumTests() - 26);
+
+//    d.FileToData(s21::DataLoader::kTrain, true);
+//    std::random_device rd;
+//    std::mt19937 gen(rd());
+
+//    s21::MLP biba(std::vector<size_t>({784, 150, 26, 26}), d, 0.03);
+//    for(int i = 0; i <8; ++i) {
+//        biba.GradientDescent(100, 150);
+//        auto batch = d.CreateSample(200, dist(gen));
+//        size_t correct = 0;
+//        for (const auto &p: batch) {
+//            correct += biba.Predict(p);
+//        }
+//        std::cout << "correctly guessed " << correct << "out of " << batch.size() << " examples" << std::endl;
+//    }
     ///test
-    std::cout << "it's testing time" << std::endl;
+//    std::cout << "it's testing time" << std::endl;
 //    std::random_device rd; // obtain a random number from hardware
 //    std::mt19937 gen(rd()); // seed the generator
 
-    d.FileToData(s21::DataLoader::kTest, true);
-    auto & test = d.Data();
-    size_t correct = 0;
-    for(const auto& p : test){
-        correct += biba.Predict(p);
-    }
-    std::cout << "correctly guessed " << correct << "out of " << d.MaximumTests() <<" examples" << std::endl;
+//    d.FileToData(s21::DataLoader::kTest, true);
+//    auto & test = d.Data();
+//    size_t correct = 0;
+//    for(const auto& p : test){
+//        correct += biba.Predict(p);
+//    }
+//    std::cout << "correctly guessed " << correct << "out of " << d.MaximumTests() <<" examples" << std::endl;
 
 
     ///correctly guessed 7382out of 14800 examples

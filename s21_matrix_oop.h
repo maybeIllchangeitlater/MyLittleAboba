@@ -14,12 +14,13 @@ class S21Matrix {
 
   S21Matrix() noexcept;
   explicit S21Matrix(const size_t rows, const size_t cols);
+  S21Matrix(const size_t rows, const size_t cols, bool zeroes);
   S21Matrix(const size_t rows, const size_t cols, std::mt19937& generator, const double from, const double to);
   S21Matrix(const S21Matrix &other);
   S21Matrix(S21Matrix &&other) noexcept;
   S21Matrix &operator=(const S21Matrix &other);
   S21Matrix &operator=(S21Matrix &&other) noexcept;
-  virtual ~S21Matrix();
+  ~S21Matrix();
 
   bool EqMatrix(const S21Matrix &other) const noexcept;
   bool operator==(const S21Matrix &other) const noexcept;
@@ -49,35 +50,32 @@ class S21Matrix {
   S21Matrix &operator-=(const double num) noexcept;
 
   void MulNumber(const double num) noexcept;
-  S21Matrix operator*(const double &x) const;
-  friend S21Matrix operator*(const double &x, const S21Matrix &other);
-  S21Matrix &operator*=(const double &x) noexcept;
+  S21Matrix operator*(const double num) const;
+  friend S21Matrix operator*(const double num, const S21Matrix &other);
+  S21Matrix &operator*=(const double num) noexcept;
 
   void DivNumber(const double num) noexcept;
-  S21Matrix operator/(const double &x) const;
-  friend S21Matrix operator/(const double &x, const S21Matrix &other);
-  S21Matrix &operator/=(const double &x) noexcept;
+  S21Matrix operator/(const double num) const;
+  friend S21Matrix operator/(const double num, const S21Matrix &other);
+  S21Matrix &operator/=(const double num) noexcept;
 
   S21Matrix MulElementwise(const S21Matrix& other) const;
-  S21Matrix MulElementwiseT(const S21Matrix& other) const;
   S21Matrix MulByTransposed(const S21Matrix& other) const;
   S21Matrix MulSelfTranspose(const S21Matrix &other) const;
 
   S21Matrix Transpose() const;
   S21Matrix T() const;
-  S21Matrix SumColwise(const S21Matrix & other) const;
   S21Matrix Exp() const;
-  double Determinant() const;
   double Sum() const noexcept;
-  S21Matrix CalcComplements() const;
-  S21Matrix InverseMatrix() const;
+  S21Matrix Abs() const;
 
   S21Matrix ForEach(const std::function<double(const double)> &function) const;
+  S21Matrix ForEach(const S21Matrix& other, const std::function<double(const double, const double)> &function) const;
 
 
-  size_t GetRows() const noexcept { return rows_; }
-  size_t GetCols() const noexcept { return cols_; }
-  std::pair<size_t, size_t> GetShape() const noexcept {return std::make_pair(rows_, cols_);}
+  size_t Rows() const noexcept { return rows_; }
+  size_t Cols() const noexcept { return cols_; }
+  std::pair<size_t, size_t> Shape() const noexcept {return std::make_pair(rows_, cols_);}
   size_t Size() const noexcept {return rows_ * cols_;}
 
   void SetRows(const size_t rows);
@@ -92,8 +90,6 @@ class S21Matrix {
   friend std::istream &operator>>(std::istream &in, S21Matrix &other);
 
  private:
-  void CreateMinor(const size_t skip_i, const size_t skip_j, const S21Matrix &other);
-
   size_t rows_, cols_;
   double **matrix_;
 };

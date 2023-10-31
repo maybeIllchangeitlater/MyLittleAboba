@@ -3,20 +3,15 @@
 
 namespace s21{
 
-    MLP::MLP(const std::vector<size_t>& topology, DataLoader &dl, double lr) :topology_(topology), dl_(dl),
-    gen_(std::random_device()()), lr_(lr){
-        if(dl_.Data().empty())
-            dl_.FileToData(DataLoader::kTrain);
-        for(size_t i = 0; i < topology_.size(); ++i){
-            if(i != (topology_.size() - 1))
-                //initialize layer weights with small random values using Xavier initialization
-                //biases are 0s
-                layers_.emplace_back(S21Matrix(topology_[i], topology_[i + 1], gen_, 0.0, (2.0/std::sqrt(topology_[i] * topology_[i + 1]))),
-                                     S21Matrix(1, topology_[i + 1]));
-                //2.0/ might be better for sigmoid
-            else
-                layers_.emplace_back();
+    MLP::MLP(std::vector<size_t> topology, DataLoader * dl, double lr) : dl_(dl),
+                                                                              gen_(std::random_device()()), lr_(lr){
+        for(size_t i = 0; i < topology.size() - 1; ++i){
+            //initialize layer weights with small random values using Xavier initialization
+            //biases are 0s
+            layers_.emplace_back(S21Matrix(topology[i], topology[i + 1], gen_, 0.0, (2.0/std::sqrt(topology[i] * topology[i + 1]))),
+                                     S21Matrix(1, topology[i + 1]));
         }
+        layers_.emplace_back();
     }
 
     void MLP::FeedForward(const Mx &in) {
@@ -59,7 +54,8 @@ namespace s21{
     }
 
     double MLP::GetAccuracy(const Mx& ideal){
-        return (layers_.back().activated_outputs_ - ideal).ForEach([](double x){return std::fabs(x);}).Sum()/26.0;
+        return (layers_.back().activated_outputs_ - ideal).Abs().Sum()
+        /static_cast<double>(layers_.back().activated_outputs_.Size());
     }
 
     bool MLP::Predict(const std::pair<S21Matrix, S21Matrix>& in){
@@ -75,7 +71,7 @@ namespace s21{
 
     bool MLP::Debug(const Mx &ideal) {
         size_t i = 0;
-        for (; i < ideal.GetCols(); ++i) {
+        for (; i < ideal.Cols(); ++i) {
             if (ideal(0, i)) {
 //                std::cout << "Letter is: " << static_cast<char>('a' + i) << "\t";
                 break;
@@ -90,7 +86,7 @@ namespace s21{
     size_t MLP::GetAnswer(){
         double max = 0.0;
         size_t max_i = 0;
-        for (size_t i = 0; i < layers_.back().activated_outputs_.GetCols(); ++i) {
+        for (size_t i = 0; i < layers_.back().activated_outputs_.Cols(); ++i) {
             if(max < layers_.back().activated_outputs_(0, i)){
                 max = layers_.back().activated_outputs_(0, i);
                 max_i = i;
@@ -99,33 +95,71 @@ namespace s21{
         return max_i;
     }
 
-    void MLP::GradientDescent(size_t epochs, size_t batch_size, double lr_reduction){
+    size_t MLP::Test() {
+        auto & test_set = dl_->TestData();
+        chad_counter_ = 0;
+        for(const auto& input : test_set){
+            chad_counter_ += Predict(input);
+        }
+        return chad_counter_;
+    }
+
+    void MLP::GradientDescent(size_t epochs, size_t iterations, size_t batch_size, double lr_reduction, size_t reduction_frequency){
         average_error_ = 0;
-        average_error_old_ = 0;
-        batch_size = std::min(batch_size, dl_.MaximumTests());
-        std::uniform_int_distribution<size_t> dist(0, dl_.MaximumTests() - batch_size);
-        auto batch = dl_.CreateSample(batch_size, dist(gen_));
-        for(size_t e = 0; e < epochs; ++e){
-//            auto batch = dl_.CreateSample(batch_size, dist(gen_));
-            std::shuffle(batch.begin(), batch.end(), gen_);
-            for(int i = 0; i < batch_size; ++i){
-                FeedForward(batch[i].second);
-                BackPropogation(batch[i].first);
-                if(!e) { //check how accuracy changes for when preceptron first time sees the batch
-                    average_error_ += GetAccuracy(batch[i].first);
+//        average_error_old_ = 0;
+        batch_size = std::min(batch_size, dl_->MaximumTests());
+        std::uniform_int_distribution<size_t> dist(0, dl_->MaximumTests() - batch_size);
+        for(size_t e = 0; e < epochs; ++e) {
+            auto batch = dl_->CreateSample(batch_size, dist(gen_));
+            for (size_t i = 0; i < iterations; ++i) {
+                std::shuffle(batch.begin(), batch.end(), gen_);
+                for (int b = 0; b < batch_size; ++b) {
+                    FeedForward(batch[b].second);
+                    BackPropogation(batch[b].first);
+                    if (!i) { //check how accuracy changes for when preceptron first time sees the batch
+                        average_error_ += GetAccuracy(batch[b].first);
+                    }
+                }
+                if (!i) {
+                    average_error_ = average_error_ / static_cast<double>(batch_size);
+//                    std::cout << "average error is " << average_error_ << std::endl;
+                    average_error_ = 0;
                 }
             }
-            if(!e) {
-                average_error_ = average_error_/26.0;
-                std::cout << "average layer error is " << average_error_ << std::endl;
-                average_error_ = 0;
+            if (reduction_frequency && !(e + 1 % reduction_frequency)) {
+                lr_ -= lr_reduction;
             }
-            lr_ -= lr_reduction;
         }
-
+    }
+    std::ostream &operator<<(std::ostream &out, const MLP &other){
+        for(const auto & l : other.GetLayer())
+            out << l.activated_outputs_.Cols() << " "; //save topology
+//        out << "\n" << other.CorrectAnswers() << "\n";
+        for(const auto& layer : other.GetLayer()){
+            out << layer.weights_;
+            out << layer.biases_;
+        }
+        return out;
+    }
+    std::istream &operator>>(std::istream &in, MLP &other){
+        std::vector<size_t> topology;
+        for(int i = 0; i < 4; ++i) {
+            size_t tmp;
+            in >> tmp;
+            topology.push_back(tmp);
+        }
+        for(int i = 0; i < topology.size(); ++i){
+            S21Matrix w(topology[i], topology[i + 1]);
+            S21Matrix b(1, topology[i + 1]);
+            in >> w;
+            in >> b;
+            other.GetMutableLayer().emplace_back(std::move(w), std::move(b));
+        }
+        return in;
     }
 
 
 
-///seems promising. add bias, experiment with lr and topology
+
+
 }
