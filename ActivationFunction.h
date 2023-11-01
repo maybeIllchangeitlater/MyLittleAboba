@@ -1,7 +1,7 @@
 #ifndef ACTIVATION_FUNCTION_H_
 #define ACTIVATION_FUNCTION_H_
 #include <cmath>
-#include "s21_matrix_oop.h"
+#include "MLPmatrix.h"
 
 
 class ActivationFunction{
@@ -13,8 +13,8 @@ public:
         double s = Sigmoid(x);
         return s * (1.0 - s);
     };
-    static s21::S21Matrix Softmax(const s21::S21Matrix& x){
-        s21::S21Matrix exp_x = x.Exp();
+    static s21::MLPMatrix Softmax(const s21::MLPMatrix& x){
+        s21::MLPMatrix exp_x = x.Exp();
         return exp_x/(exp_x.Sum());
     }
 };

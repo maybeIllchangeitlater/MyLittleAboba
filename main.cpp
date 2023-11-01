@@ -1,53 +1,91 @@
 #include <iostream>
 #include "MLP.h"
 #include "TrainingGround.h"
-#include "s21_matrix_oop.h"
-
+#include "TrainingConfig.h"
 int main() {
     s21::DataLoader d(784, 26);
+
     d.FileToData("/Users/monke/Biba/emnist-letters/emnist-letters-train.csv", s21::DataLoader::kTrain);
     d.FileToData("/Users/monke/Biba/emnist-letters/emnist-letters-test.csv", s21::DataLoader::kTest);
-    s21::TrainingConfig conf;
-
-    conf.load = true;
-    conf.winner_savepath = "/Users/monke/Biba/19_";
-    conf.path_to_perceptrons.emplace_back("/Users/monke/Biba/18_784_150_26_26_correctly_passed_10507tests.txt");
-//    conf.topologies.push_back({784, 150, 26, 26});
-//    conf.topologies.push_back({784, 150, 26, 26});
-//    conf.topologies.push_back({784, 150, 26, 26});
-    conf.batch_sizes.emplace_back(100);
-    conf.batch_sizes.emplace_back(150);
-    conf.batch_sizes.emplace_back(100);
-    conf.batch_sizes.emplace_back(200);
-    conf.batch_sizes.emplace_back(100);
-    conf.batch_sizes.emplace_back(150);
-    conf.batch_iterations.emplace_back(60);
-    conf.batch_iterations.emplace_back(60);
-    conf.batch_iterations.emplace_back(60);
-    conf.batch_iterations.emplace_back(60);
-    conf.batch_iterations.emplace_back(60);
-    conf.batch_iterations.emplace_back(60);
-    conf.epochs.emplace_back(5);
-    conf.epochs.emplace_back(5);
-    conf.epochs.emplace_back(5);
-    conf.epochs.emplace_back(5);
-    conf.epochs.emplace_back(5);
-    conf.epochs.emplace_back(5);
-    conf.learning_rates.emplace_back(0.005, std::make_pair(0.0001, 5));
-    conf.learning_rates.emplace_back(0.005, std::make_pair(0.0001, 5));
-    conf.learning_rates.emplace_back(0.005, std::make_pair(0.0001, 5));
-    conf.learning_rates.emplace_back(0.005, std::make_pair(0.0001, 5));
-    conf.learning_rates.emplace_back(0.005, std::make_pair(0.0001, 5));
-    conf.learning_rates.emplace_back(0.005, std::make_pair(0.0001, 5));
-    conf.perceptron_counter = 6;
-
-    s21::TrainingGround OnlyTheStrongestWillSurvive(conf, d);
-    OnlyTheStrongestWillSurvive.Train();
-    for(const auto& w: OnlyTheStrongestWillSurvive.correctness_counter){
-        std::cout << w << " ";
+    std::vector<s21::TrainingConfig> night;
+    for(size_t i = 0; i < 50; ++i) {
+        night.emplace_back();
+        night.back().perceptron_counter = 6;
+        for(int j = 0; j < 6; ++j) {
+            night.back().topologies.push_back({784, 128, 128, 26});
+            night.back().batch_sizes.emplace_back(d.MaximumTests());
+            night.back().batch_iterations.emplace_back(1);
+        }
+        night.back().winner_savepath = "/Users/monke/Biba/";
+        night.back().load = false;
     }
-    std::cout << "out of " << d.MaximumTestsTests();
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_real_distribution<double>uni_lr(0.09, 0.3);
+    std::uniform_int_distribution rate_r(0, 2);
+    for(size_t i = 0; i < 50; ++i) {
+        for(int j = 0; j < 6; ++j) {
+            night[i].epochs.emplace_back(std::min((i + 10 % 20), static_cast<size_t>(5)));
+            auto lr = uni_lr(gen);
+            std::uniform_real_distribution<double>uni_lr_red(lr/38.0, lr/19.0);
+            night[i].learning_rates.emplace_back(lr, std::pair(uni_lr_red(gen), rate_r(gen)));
+        }
+    }
+    for(auto & conf : night){
+        s21::TrainingGround OnlyTheStrongestWillSurvive(conf, d);
+        OnlyTheStrongestWillSurvive.Train();
+        for(const auto& w: OnlyTheStrongestWillSurvive.correctness_counter){
+            std::cout << w << " ";
+        }
 
+        std::cout << "out of " << d.MaximumTestsTests() << std::endl;
+        size_t i = 1;
+        for(const auto&ae : OnlyTheStrongestWillSurvive.accuracy) {
+            std::cout << i++ << "aboba accuracy over time:" << std::endl;
+            for(const auto& e: ae){
+                std::cout << e << " ";
+            }
+            std::cout << std::endl;
+        }
+    }
+
+//    conf.load = true;
+//    conf.winner_savepath = "/Users/monke/Biba/4_";
+//    conf.path_to_perceptrons.emplace_back("/Users/monke/Biba/3_784_128_128_26_correctly_passed_11456tests.txt");
+//    conf.topologies.push_back({784, 128, 128, 26}); //going a bit more complex now
+//    conf.topologies.push_back({784, 128, 128, 26}); //going a bit more complex now
+//    conf.topologies.push_back({784, 128, 128, 26}); //going a bit more complex now
+//    conf.topologies.push_back({784, 128, 128, 26}); //going a bit more complex now
+//    conf.topologies.push_back({784, 128, 128, 26}); //going a bit more complex now
+//    conf.topologies.push_back({784, 128, 128, 26}); //going a bit more complex now
+//    conf.batch_sizes.emplace_back(d.MaximumTests());
+//    conf.batch_sizes.emplace_back(d.MaximumTests());
+//    conf.batch_sizes.emplace_back(d.MaximumTests());
+//    conf.batch_sizes.emplace_back(d.MaximumTests());
+//    conf.batch_sizes.emplace_back(d.MaximumTests());
+//    conf.batch_sizes.emplace_back(d.MaximumTests());
+//    conf.batch_iterations.emplace_back(1);
+//    conf.batch_iterations.emplace_back(1);
+//    conf.batch_iterations.emplace_back(1);
+//    conf.batch_iterations.emplace_back(1);
+//    conf.batch_iterations.emplace_back(1);
+//    conf.batch_iterations.emplace_back(1);
+//    conf.epochs.emplace_back(3);
+//    conf.epochs.emplace_back(3);
+//    conf.epochs.emplace_back(3);
+//    conf.epochs.emplace_back(3);
+//    conf.epochs.emplace_back(3);
+//    conf.epochs.emplace_back(3);
+//    conf.learning_rates.emplace_back(0.02, std::make_pair(0.0, 70));
+//    conf.learning_rates.emplace_back(0.012, std::make_pair(0.0, 70));
+//    conf.learning_rates.emplace_back(0.01, std::make_pair(0.0, 70));
+//    conf.learning_rates.emplace_back(0.023, std::make_pair(0.0, 200));
+//    conf.learning_rates.emplace_back(0.017, std::make_pair(0.0, 200));
+//    conf.learning_rates.emplace_back(0.015, std::make_pair(0.0, 200));
+//    conf.perceptron_counter = 6;
+
+//    s21::TrainingGround OnlyTheStrongestWillSurvive(conf, d);
+//    OnlyTheStrongestWillSurvive.Train();
 
 
 //    s21::MLP aboba(&d);

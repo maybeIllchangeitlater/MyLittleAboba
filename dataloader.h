@@ -1,19 +1,18 @@
-#ifndef MODELLOADER_H_
-#define MODELLOADER_H_
+#ifndef MULTILAYERABOBATRON_MODEL_MODELLOADER_H_
+#define MULTILAYERABOBATRON_MODEL_MODELLOADER_H_
 
 #include <vector>
-//#include "eigen-3.4.0/Eigen/Dense"
 #include <fstream>
 #include <sstream>
-#include "s21_matrix_oop.h"
+#include "MLPmatrix.h"
 #include <iostream>
 #include <__random/random_device.h>
 #include <random>
 
 namespace s21{
-class DataLoader{
+    using Mx = MLPMatrix;
+    class DataLoader{
 public:
-    using Matrix = S21Matrix;
     enum Mode{
         kTest,
         kTrain
@@ -27,11 +26,11 @@ public:
     /**
      * @brief returns entire train dataset
      */
-    const std::vector<std::pair<Matrix, Matrix>>& Data() const noexcept { return data_; }
+    const std::vector<std::pair<Mx, Mx>>& Data() const noexcept { return data_; }
      /**
       * @brief returns entire test dataset
       */
-     const std::vector<std::pair<Matrix, Matrix>>& TestData() const noexcept {return test_data_;}
+     const std::vector<std::pair<Mx, Mx>>& TestData() const noexcept {return test_data_;}
     /**
      * @brief loads dataset(entire dataset)
      * @param filepath path to dataset
@@ -46,7 +45,7 @@ public:
      * @param mode test kTest or train kTrain dataset
      * @param shuffle sample
      */
-    std::vector<std::pair<Matrix, Matrix>> CreateSample(size_t batch_size = 125, size_t start_from = 0,Mode mode = kTrain, bool shuffle = false);
+    std::vector<std::pair<Mx, Mx>> CreateSample(size_t batch_size = 125, size_t start_from = 0,Mode mode = kTrain, bool shuffle = false);
     /**
      * @brief Get maximum possible amount of samples from learning dataset
      */
@@ -55,14 +54,20 @@ public:
      * @brief Get maximum possible amount of samples from testing dataset
      */
     size_t MaximumTestsTests() const noexcept { return test_data_.size(); }
+    /**
+     * @brief get amount of inputs in data
+     */
     size_t Inputs() const noexcept { return in_; }
+    /**
+     * @brief get amount of output labels
+     */
     size_t Outputs() const noexcept { return out_; }
 private:
     size_t in_;
     size_t out_;
-    std::vector<std::pair<Matrix, Matrix>> data_;
-    std::vector<std::pair<Matrix, Matrix>> test_data_;
+    std::vector<std::pair<Mx, Mx>> data_;
+    std::vector<std::pair<Mx, Mx>> test_data_;
 
 };
 }
-#endif //MODELLOADER_H_
+#endif //MULTILAYERABOBATRON_MODEL_MODELLOADER_H_

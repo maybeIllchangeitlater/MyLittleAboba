@@ -4,14 +4,14 @@
 namespace s21{
 
     MLP::MLP(std::vector<size_t> topology, DataLoader * dl) : dl_(dl),
-    gen_(std::random_device()()){
+                                                              gen_(std::random_device()()){
         for(size_t i = 0; i < topology.size() - 1; ++i){
             //initialize layer weights with small random values
             //using Xavier initialization
             //initial biases are 0s
-            layers_.emplace_back(S21Matrix(topology[i], topology[i + 1], gen_,
+            layers_.emplace_back(Mx(topology[i], topology[i + 1], gen_,
                                            0.0, (2.0/std::sqrt(topology[i] * topology[i + 1]))),
-                                     S21Matrix(1, topology[i + 1]));
+                                 Mx(1, topology[i + 1]));
         }
         layers_.emplace_back();
     }
@@ -20,10 +20,11 @@ namespace s21{
         layers_[0].activated_outputs_ = in;
         layers_[0].outputs_ = in;
         for(size_t i = 0; i < layers_.size() - 1; ++i){
-            layers_[i + 1].outputs_ = layers_[i].activated_outputs_ * layers_[i].weights_ + layers_[i].biases_;
+            layers_[i + 1].outputs_ = layers_[i].activated_outputs_ * layers_[i].weights_;
+            layers_[i + 1].outputs_ += layers_[i].biases_;
             layers_[i + 1].activated_outputs_ = i < layers_.size() - 2
-                    ? layers_[i + 1].outputs_.ForEach(AF::Sigmoid)
-                    :  AF::Softmax(layers_[i + 1].outputs_);
+                                                ? layers_[i + 1].outputs_.Transform(AF::Sigmoid)
+                                                :  AF::Softmax(layers_[i + 1].outputs_);
             //Zi+1 = ai * Wi + bi
             //a = activ(Z)
         }
@@ -34,9 +35,9 @@ namespace s21{
         //dZ = a - Y
         for(int i = layers_.size() - 3; i >=0; --i){
             layers_[i].error_ = layers_[i + 1].error_.MulByTransposed(layers_[i + 1].weights_);
-            //dZi = dZi+1 * W.T inner product with ActDeriv(Zi) python - dZi = dZi+i.dot(W.T) * ActDeriv(Zi)
-            Mx der = layers_[i + 1].outputs_.ForEach(AF::SigmoidDeriv);
-            layers_[i].error_ = layers_[i].error_.MulElementwise(der);
+            Mx der = layers_[i + 1].outputs_.Transform(AF::SigmoidDeriv);
+            layers_[i].error_ &= der;
+            //dZi = dZi+1 * W.T hadamard product with ActDeriv(Zi) python - dZi = dZi+i.dot(W.T) * ActDeriv(Zi)
         }
         UpdateWeights();
     }
@@ -54,12 +55,17 @@ namespace s21{
 
     double MLP::GetAccuracy(const Mx& ideal){
         return (layers_.back().activated_outputs_ - ideal).Abs().Sum()
-        /static_cast<double>(layers_.back().activated_outputs_.Size());
+               /static_cast<double>(layers_.back().activated_outputs_.Size());
     }
 
-    bool MLP::Predict(const std::pair<S21Matrix, S21Matrix>& in){
+    bool MLP::Predict(const std::pair<Mx, Mx>& in){
         FeedForward(in.second);
         return Debug(in.first);
+    }
+
+    size_t MLP::Guess(const s21::Mx &in) {
+        FeedForward(in);
+        return GetAnswer();
     }
 
     bool MLP::Debug(const Mx &ideal) {
@@ -93,6 +99,7 @@ namespace s21{
 
     void MLP::GradientDescent(double lr, size_t epochs, size_t iterations, size_t batch_size, double lr_reduction, size_t reduction_frequency) {
         lr_ = lr;
+        double error = 0.0;
         batch_size = std::min(batch_size, dl_->MaximumTests());
         std::uniform_int_distribution<size_t> dist(0, dl_->MaximumTests() - batch_size);
         for (size_t e = 0; e < epochs; ++e) {
@@ -102,14 +109,25 @@ namespace s21{
                 for (int b = 0; b < batch_size; ++b) {
                     FeedForward(batch[b].second);
                     BackPropogation(batch[b].first);
+                    if(!i){
+                        error += GetAccuracy(batch[b].first);
+                    }
                 }
-                if (reduction_frequency && !(e + 1 % reduction_frequency)) {
-                    lr_ -= lr_reduction;
+                if(!i) {
+                    average_error_.push_back(error/batch_size);
+                    error = 0.0;
                 }
+            }
+            if (reduction_frequency && !(e + 1 % reduction_frequency)) {
+                lr_ -= lr_reduction;
+            }
+            if(!e){
+
             }
         }
     }
     std::ostream &operator<<(std::ostream &out, const MLP &other){
+        out << other.layers_.size();
         for(const auto & l : other.layers_) {
             out << l.activated_outputs_.Cols() << " "; //save topology
         }
@@ -121,7 +139,9 @@ namespace s21{
     }
     std::istream &operator>>(std::istream &in, MLP &other){
         std::vector<size_t> topology;
-        for(int i = 0; i < 4; ++i) {
+        size_t t_size;
+        in >>  t_size;
+        for(int i = 0; i < t_size; ++i) {
             size_t tmp;
             in >> tmp;
             topology.push_back(tmp);
@@ -131,8 +151,8 @@ namespace s21{
                                    "Inputs and outputs of preceptron must correspond to ins and outs of "
                                    "dataloader");
         for(int i = 0; i < topology.size() - 1; ++i){
-            S21Matrix w(topology[i], topology[i + 1]);
-            S21Matrix b(1, topology[i + 1]);
+            Mx w(topology[i], topology[i + 1]);
+            Mx b(1, topology[i + 1]);
             in >> w;
             in >> b;
             other.layers_.emplace_back(std::move(w), std::move(b));

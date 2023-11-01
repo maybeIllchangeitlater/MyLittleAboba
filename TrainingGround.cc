@@ -1,26 +1,31 @@
 #include "TrainingGround.h"
 
 namespace s21{
-    TrainingGround::TrainingGround(s21::TrainingConfig& schel, DataLoader& d) : schedule_(schel), dl_(d){
-        schedule_.load && !schedule_.path_to_perceptrons.empty() ? LoadPreceptrons() : CreatePreceptrons();
+    TrainingGround::TrainingGround(TrainingConfig& schel, DataLoader& d) : schedule_(schel), dl_(d){
+        schedule_.load && !schedule_.path_to_perceptrons.empty() ? LoadPerceptrons() : CreatePerceptrons();
     } ///work with schel sizes possibly leading to sega
 
 
     void TrainingGround::Train() {
         std::vector<std::thread> they_learn;
-        TrainPreceptrons(they_learn);
+        TrainPerceptrons(they_learn);
         they_learn.clear();
-        TestPreceptrons(they_learn);
+        TestPerceptrons(they_learn);
         they_learn.clear();
+//        for(const auto& aboba : abobas_){
+//            accuracy.emplace_back();
+//            for(const auto& a : aboba.GetAccuracy())
+//                accuracy.back().emplace_back(a);
+//        }
         SaveTheBestOne();
     }
 
-    void TrainingGround::LoadPreceptrons() {
+    void TrainingGround::LoadPerceptrons() {
 
         for (const auto &s: schedule_.path_to_perceptrons) {
-            abobas_.emplace_back(&dl_);
             std::fstream file(s, std::ios_base::in);
             if (file) {
+                abobas_.emplace_back(&dl_);
                 file >> abobas_.back();
                 file.close();
             } else {
@@ -34,7 +39,7 @@ namespace s21{
 
     }
 
-    void TrainingGround::CreatePreceptrons() {
+    void TrainingGround::CreatePerceptrons() {
 
         if(!schedule_.perceptron_counter) schedule_.perceptron_counter = 1;
 
@@ -49,7 +54,7 @@ namespace s21{
 
     }
 
-    void TrainingGround::TrainPreceptrons(std::vector<std::thread>& they_learn) {
+    void TrainingGround::TrainPerceptrons(std::vector<std::thread>& they_learn) {
 
         size_t counter = 0;
 
@@ -74,7 +79,7 @@ namespace s21{
             t.join();
 
     }
-    void TrainingGround::TestPreceptrons(std::vector<std::thread> &they_learn) {
+    void TrainingGround::TestPerceptrons(std::vector<std::thread> &they_learn) {
 
         for(MLP &aboba : abobas_){
             auto functor = [&aboba](){ aboba.Test(); };

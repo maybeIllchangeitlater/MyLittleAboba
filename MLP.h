@@ -1,17 +1,13 @@
-#ifndef MULTILAYERABOBATRON_MLP_H
-#define MULTILAYERABOBATRON_MLP_H
+#ifndef MULTILAYERABOBATRON_MODEL_MLP_H_
+#define MULTILAYERABOBATRON_MODEL_MLP_H_
 
-//#include "s21_matrix_oop.h"
-//#include "vector"
 #include "ActivationFunction.h"
 #include "MLayer.h"
-#include "dataloader.h"
-//#include <random>
+#include "Dataloader.h"
 
 namespace s21 {
     class MLP {
     public:
-        using Mx = S21Matrix;
         using AF = ActivationFunction;
         explicit MLP(s21::DataLoader * d) : dl_(d){}
         explicit MLP(std::vector<size_t> topology, s21::DataLoader * dl);
@@ -33,7 +29,7 @@ namespace s21 {
          * @param in pair of ideal output matrix and input matrix
          * @return false if MLP was wrong, true if he was right
          */
-        bool Predict(const std::pair<S21Matrix, S21Matrix>& in);
+        bool Predict(const std::pair<Mx, Mx>& in);
         /**
          * @brief run the tests
          * @return amount of correct guesses
@@ -43,6 +39,12 @@ namespace s21 {
          * @return how many tests did MLP pass last test run
          */
         size_t CorrectAnswers() const noexcept { return chad_counter_; };
+        /**
+         * @brief parse input and guess a label
+         */
+        size_t Guess(const Mx& in);
+
+        const std::vector<double>& GetAccuracy() const noexcept { return average_error_; }
 
         const std::vector<MLayer>& GetLayers(){ return layers_; }
 
@@ -62,7 +64,7 @@ namespace s21 {
         void FeedForward(const Mx &in);
         ///preform backward propogation of error.\n
         ///dZ = a - Y for last layer
-        ///backpropogate as dZi = dZi+1 * Wi+1.T mul elementwise with activation_deriv(Zi+1)
+        ///backpropogate as dZi = dZi+1 * Wi+1.T hadamard product with activation_deriv(Zi+1)
         void BackPropogation(const Mx &ideal);
         ///knowing output gradients for each layer update weights and biases
         ///dWi = ai.T * dZ
@@ -71,14 +73,15 @@ namespace s21 {
         void UpdateWeights();
 
         std::vector<MLayer> layers_;
+        std::vector<double> average_error_;
         s21::DataLoader* dl_;
         std::mt19937 gen_;
         double lr_;
-        double average_error_;
+//        double average_error_;
         size_t chad_counter_;
 //        double average_error_old_;
 
     };
 }
 
-#endif //MULTILAYERABOBATRON_MLP_H
+#endif //MULTILAYERABOBATRON_MODEL_MLP_H_
