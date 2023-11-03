@@ -22,7 +22,7 @@ public:
      * @param inputs amount of neurons in input layer
      * @param outputs amount of labels/neurons in output layer
      */
-    DataLoader(size_t inputs, size_t outputs) : in_(inputs), out_(outputs) {}
+    DataLoader(size_t inputs, size_t outputs) : in_(inputs), out_(outputs), gen_(std::random_device()()) {}
     /**
      * @brief returns entire train dataset
      */
@@ -45,7 +45,7 @@ public:
      * @param mode test kTest or train kTrain dataset
      * @param shuffle sample
      */
-    std::vector<std::pair<Mx, Mx>> CreateSample(size_t batch_size = 125, size_t start_from = 0,Mode mode = kTrain, bool shuffle = false);
+    std::vector<std::pair<Mx, Mx>> CreateSample(size_t batch_size = SIZE_T_MAX, size_t start_from = 0,Mode mode = kTrain, bool shuffle = false);
     /**
      * @brief Get maximum possible amount of samples from learning dataset
      */
@@ -67,6 +67,7 @@ private:
     size_t out_;
     std::vector<std::pair<Mx, Mx>> data_;
     std::vector<std::pair<Mx, Mx>> test_data_;
+    std::mt19937 gen_;
 
 };
 }

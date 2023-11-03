@@ -126,38 +126,30 @@ namespace s21 {
 
         MLPMatrix operator*(const double num) const{
             MLPMatrix res(rows_, cols_);
-            auto it = res.begin();
-            for(const auto &v: *this)
-                *it++ = v * num;
+            std::transform(begin(), end(), res.begin(), [num](double x){ return x * num; });
             return res;
         }
         friend MLPMatrix operator*(const double num, const MLPMatrix &other){
             return other * num;
         }
         MLPMatrix &operator*=(const double num) noexcept {
-            for(auto &v: *this)
-                v *= num;
+            std::for_each(begin(), end(), [num](double x){ return x * num; });
             return *this;
         }
 
 
         MLPMatrix operator/(const double num) const{
             MLPMatrix res(rows_, cols_);
-            auto it = res.begin();
-            for(const auto &v: *this)
-                *it++ = v / num;
+            std::transform(begin(), end(), res.begin(), [num](double x){ return x / num; });
             return res;
         }
         friend MLPMatrix operator/(const double num, const MLPMatrix &other){
             MLPMatrix res(other.rows_, other.cols_);
-            auto it = res.begin();
-            for(const auto &v: other)
-                *it++ = num / v;
+            std::transform(other.begin(), other.end(), res.begin(), [num](double x){ return num / x; });
             return res;
         }
         MLPMatrix &operator/=(const double num) noexcept{
-            for(auto&v : *this)
-                v /= num;
+            std::for_each(begin(), end(), [num](double x){ return x * num; });
             return *this;
         }
 
@@ -170,11 +162,6 @@ namespace s21 {
         MLPMatrix Transform(double(*foo)(double)) const{
             MLPMatrix res(rows_, cols_);
             std::transform(begin(), end(), res.begin(), foo);
-            return res;
-        }
-        MLPMatrix Transform(const MLPMatrix& other, double(*foo)(double, double)) const{
-            MLPMatrix res(rows_, cols_);
-            std::transform(begin(), end(), other.begin(), res.begin(), foo);
             return res;
         }
 
@@ -204,9 +191,6 @@ namespace s21 {
             return out;
         }
         friend std::istream &operator>>(std::istream &in, MLPMatrix &other){
-//            for (int i = 0; i < other.Rows(); i++) {
-//                for (int j = 0; j < other.Cols(); j++) in >> other(i, j);
-//            }
             for(auto& v : other) in >> v;
             return in;
         }

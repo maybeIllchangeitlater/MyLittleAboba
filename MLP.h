@@ -8,9 +8,8 @@
 namespace s21 {
     class MLP {
     public:
-        using AF = ActivationFunction;
         explicit MLP(s21::DataLoader * d) : dl_(d){}
-        explicit MLP(std::vector<size_t> topology, s21::DataLoader * dl);
+        explicit MLP(std::vector<size_t> topology, s21::DataLoader * dl, const char* activation_function = "sigmoid");
         MLP(const MLP& other) = default;
         MLP(MLP&& other) noexcept  = default;
         MLP &operator=(const MLP& other) = default;
@@ -24,12 +23,8 @@ namespace s21 {
          * @param lr_reduction reduce lr by every
          * @param reduction_frequency epochs
          */
-        void GradientDescent(double lr, size_t epochs = 5, size_t iterations = 100, size_t batch_size = 125, double lr_reduction = 0.0, size_t reduction_frequency = 0);
-        /**
-         * @param in pair of ideal output matrix and input matrix
-         * @return false if MLP was wrong, true if he was right
-         */
-        bool Predict(const std::pair<Mx, Mx>& in);
+        void GradientDescent(double lr = 1.0, size_t epochs = 5, size_t batch_size = SIZE_T_MAX, double lr_reduction = 0.0, size_t reduction_frequency = 0);
+
         /**
          * @brief run the tests
          * @return amount of correct guesses
@@ -38,27 +33,22 @@ namespace s21 {
         /**
          * @return how many tests did MLP pass last test run
          */
-        size_t CorrectAnswers() const noexcept { return chad_counter_; };
+        size_t CorrectAnswers() const noexcept { return correct_test_answers; };
         /**
          * @brief parse input and guess a label
          */
-        size_t Guess(const Mx& in);
+        size_t Predict(const Mx& in);
+
 
         const std::vector<double>& GetAccuracy() const noexcept { return average_error_; }
 
         const std::vector<MLayer>& GetLayers(){ return layers_; }
 
-
         friend std::ostream &operator<<(std::ostream &out, const MLP &other);
+
         friend std::istream &operator>>(std::istream &in, MLP &other);
 
     private:
-        ///check if answer is correct
-        bool Debug(const Mx& ideal);
-        ///get label MLP thinks the answer is
-        size_t GetAnswer();
-        ///how close to ideal answer was
-        double GetAccuracy(const Mx& ideal);
         ///preform forward propogation from input layer in\n
         ///Zi+1 = ai * Wi + bi (Z0 && a0 = in), ai = activation(Zi)
         void FeedForward(const Mx &in);
@@ -71,15 +61,27 @@ namespace s21 {
         ///Wi -= dWi*lr
         ///bi -= dZi * lr
         void UpdateWeights();
+        ///retrieves activation function and its derivative
+        void GetActivationFunction();
+        ///check if answer is correct after feed forwarding
+        bool WasRight(const Mx& ideal);
+        ///get label MLP thinks the answer is after feed forwarding
+        size_t GetAnswer();
+        ///Forward and check if answer was correct
+        bool Debug(const std::pair<Mx, Mx>& in);
+        ///how close to ideal (0) answer was
+        double GetError(const Mx& ideal);
 
+
+        size_t correct_test_answers;
+        double lr_;
+        s21::DataLoader* dl_;
+        double(*activation_)(double);
+        double(*activation_derivative_)(double);
         std::vector<MLayer> layers_;
         std::vector<double> average_error_;
-        s21::DataLoader* dl_;
+        std::string activation_function_name_;
         std::mt19937 gen_;
-        double lr_;
-//        double average_error_;
-        size_t chad_counter_;
-//        double average_error_old_;
 
     };
 }

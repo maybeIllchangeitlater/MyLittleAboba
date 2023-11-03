@@ -1,53 +1,60 @@
 #include <iostream>
-#include "MLP.h"
-#include "TrainingGround.h"
-#include "TrainingConfig.h"
+//#include "MLP.h"
+//#include "TrainingGround.h"
+//#include "TrainingConfig.h"
+#include <random>
+
 int main() {
-    s21::DataLoader d(784, 26);
+    std::mt19937 gen_;
+    std::cout << sizeof(gen_);
+//    s21::DataLoader d(784, 26);
+//    d.FileToData("/Users/monke/Biba/emnist-letters/emnist-letters-train.csv", s21::DataLoader::kTrain);
+//    d.FileToData("/Users/monke/Biba/emnist-letters/emnist-letters-test.csv", s21::DataLoader::kTest);
+//    Save winner config
+    //Wrapper for training ground that allows to run it in circles?
+    //split lr into 3 vectors
+    //train few more abobas
+//    std::vector<s21::TrainingConfig> night;
+//    for(size_t i = 0; i < 50; ++i) {
+//        night.emplace_back();
+//        night.back().perceptron_counter = 6;
+//        for(int j = 0; j < 6; ++j) {
+//            night.back().topologies.push_back({784, 128, 128, 26});
+//            night.back().batch_sizes.emplace_back(d.MaximumTests());
+//            night.back().batch_iterations.emplace_back(1);
+//        }
+//        night.back().winner_savepath = "/Users/monke/Biba/";
+//        night.back().load = false;
+//    }
+//    std::random_device rd;
+//    std::mt19937 gen(rd());
+//    std::uniform_real_distribution<double>uni_lr(0.09, 0.3);
+//    std::uniform_int_distribution rate_r(0, 2);
+//    for(size_t i = 0; i < 50; ++i) {
+//        for(int j = 0; j < 6; ++j) {
+//            night[i].epochs.emplace_back(std::min((i + 10 % 20), static_cast<size_t>(5)));
+//            auto lr = uni_lr(gen);
+//            std::uniform_real_distribution<double>uni_lr_red(lr/38.0, lr/19.0);
+//            night[i].learning_rates.emplace_back(lr, std::pair(uni_lr_red(gen), rate_r(gen)));
+//        }
+//    }
+//    for(auto & conf : night){
+//        s21::TrainingGround OnlyTheStrongestWillSurvive(conf, d);
+//        OnlyTheStrongestWillSurvive.Train();
+//        for(const auto& w: OnlyTheStrongestWillSurvive.correctness_counter){
+//            std::cout << w << " ";
+//        }
 
-    d.FileToData("/Users/monke/Biba/emnist-letters/emnist-letters-train.csv", s21::DataLoader::kTrain);
-    d.FileToData("/Users/monke/Biba/emnist-letters/emnist-letters-test.csv", s21::DataLoader::kTest);
-    std::vector<s21::TrainingConfig> night;
-    for(size_t i = 0; i < 50; ++i) {
-        night.emplace_back();
-        night.back().perceptron_counter = 6;
-        for(int j = 0; j < 6; ++j) {
-            night.back().topologies.push_back({784, 128, 128, 26});
-            night.back().batch_sizes.emplace_back(d.MaximumTests());
-            night.back().batch_iterations.emplace_back(1);
-        }
-        night.back().winner_savepath = "/Users/monke/Biba/";
-        night.back().load = false;
-    }
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::uniform_real_distribution<double>uni_lr(0.09, 0.3);
-    std::uniform_int_distribution rate_r(0, 2);
-    for(size_t i = 0; i < 50; ++i) {
-        for(int j = 0; j < 6; ++j) {
-            night[i].epochs.emplace_back(std::min((i + 10 % 20), static_cast<size_t>(5)));
-            auto lr = uni_lr(gen);
-            std::uniform_real_distribution<double>uni_lr_red(lr/38.0, lr/19.0);
-            night[i].learning_rates.emplace_back(lr, std::pair(uni_lr_red(gen), rate_r(gen)));
-        }
-    }
-    for(auto & conf : night){
-        s21::TrainingGround OnlyTheStrongestWillSurvive(conf, d);
-        OnlyTheStrongestWillSurvive.Train();
-        for(const auto& w: OnlyTheStrongestWillSurvive.correctness_counter){
-            std::cout << w << " ";
-        }
-
-        std::cout << "out of " << d.MaximumTestsTests() << std::endl;
-        size_t i = 1;
-        for(const auto&ae : OnlyTheStrongestWillSurvive.accuracy) {
-            std::cout << i++ << "aboba accuracy over time:" << std::endl;
-            for(const auto& e: ae){
-                std::cout << e << " ";
-            }
-            std::cout << std::endl;
-        }
-    }
+//        std::cout << "out of " << d.MaximumTestsTests() << std::endl;
+//        size_t i = 1;
+//        for(const auto&ae : OnlyTheStrongestWillSurvive.accuracy) {
+//            std::cout << i++ << "aboba accuracy over time:" << std::endl;
+//            for(const auto& e: ae){
+//                std::cout << e << " ";
+//            }
+//            std::cout << std::endl;
+//        }
+//    }
 
 //    conf.load = true;
 //    conf.winner_savepath = "/Users/monke/Biba/4_";

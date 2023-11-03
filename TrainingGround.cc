@@ -3,21 +3,23 @@
 namespace s21{
     TrainingGround::TrainingGround(TrainingConfig& schel, DataLoader& d) : schedule_(schel), dl_(d){
         schedule_.load && !schedule_.path_to_perceptrons.empty() ? LoadPerceptrons() : CreatePerceptrons();
-    } ///work with schel sizes possibly leading to sega
+    }
 
 
     void TrainingGround::Train() {
+
         std::vector<std::thread> they_learn;
+
         TrainPerceptrons(they_learn);
         they_learn.clear();
+
         TestPerceptrons(they_learn);
         they_learn.clear();
-//        for(const auto& aboba : abobas_){
-//            accuracy.emplace_back();
-//            for(const auto& a : aboba.GetAccuracy())
-//                accuracy.back().emplace_back(a);
-//        }
-        SaveTheBestOne();
+
+        SaveAccuracy();
+        if(schedule_.save && !schedule_.winner_savepath.empty())
+            SaveTheBestOne();
+
     }
 
     void TrainingGround::LoadPerceptrons() {
@@ -46,7 +48,7 @@ namespace s21{
         for (size_t i = 0; i < schedule_.perceptron_counter; ++i) {
             if (dl_.Inputs() != schedule_.topologies[i].front() || dl_.Outputs() != schedule_.topologies[i].back())
                 throw std::logic_error("TrainingGround Constructor:"
-                                       "Inputs and outputs of preceptron must correspond to ins and outs of "
+                                       "Inputs and outputs of perceptron must correspond to ins and outs of "
                                        "dataloader");
 
             abobas_.emplace_back(schedule_.topologies[i], &dl_);
@@ -58,18 +60,27 @@ namespace s21{
 
         size_t counter = 0;
 
-        for(MLP &aboba : abobas_){
-            size_t epochs = schedule_.epochs[counter];
-            size_t batch_size = schedule_.batch_sizes[counter];
-            size_t iterations_for_batch = schedule_.batch_iterations[counter];
-            double learning_rate = schedule_.learning_rates[counter].first;
-            double learning_rate_reduction = schedule_.learning_rates[counter].second.first;
-            size_t reduction_frequency = schedule_.learning_rates[counter].second.second;
+        for(MLP &aboba : abobas_){ //alternatively [std::min(size -1, counter)], its a mess either ways
+            size_t epochs = counter < schedule_.epochs.size()
+                    ? schedule_.epochs[counter]
+                    : schedule_.epochs.back();
+            size_t batch_size = counter < schedule_.batch_sizes.size()
+                                ? schedule_.batch_sizes[counter]
+                                : schedule_.batch_sizes.back();
+            double learning_rate = counter < schedule_.learning_rates.size()
+                                   ? schedule_.learning_rates[counter]
+                                   : schedule_.learning_rates.back();
+            double learning_rate_reduction = counter < schedule_.learning_rate_reductions.size()
+                                            ? schedule_.learning_rate_reductions[counter]
+                                            : schedule_.learning_rate_reductions.back();
+            size_t reduction_frequency = counter < schedule_.learning_rate_reduction_frequencies.size()
+                                         ? schedule_.learning_rate_reduction_frequencies[counter]
+                                         : schedule_.learning_rate_reduction_frequencies.back();
             ++counter;
 
-            auto functor = [&aboba, epochs, iterations_for_batch, batch_size, learning_rate,
+            auto functor = [&aboba, epochs, batch_size, learning_rate,
                     learning_rate_reduction, reduction_frequency](){
-                aboba.GradientDescent(learning_rate, epochs, iterations_for_batch, batch_size,
+                aboba.GradientDescent(learning_rate, epochs, batch_size,
                                       learning_rate_reduction, reduction_frequency);};
 
             they_learn.emplace_back(std::move(functor));
@@ -94,12 +105,12 @@ namespace s21{
     size_t TrainingGround::FindTheBestOne(){
 
         size_t best_ind = 0;
-        size_t correct_anss = correctness_counter.emplace_back(abobas_[0].CorrectAnswers());
+        size_t correct_ans = correctness_counter.emplace_back(abobas_[0].CorrectAnswers());
 
         for (size_t i = 1; i < abobas_.size(); ++i){
             correctness_counter.emplace_back(abobas_[i].CorrectAnswers());
-            if(correct_anss < correctness_counter.back()){
-                correct_anss = correctness_counter.back();
+            if(correct_ans < correctness_counter.back()){
+                correct_ans = correctness_counter.back();
                 best_ind = i;
             }
         }
@@ -110,19 +121,36 @@ namespace s21{
     void TrainingGround::SaveTheBestOne(){
 
         size_t best = FindTheBestOne();
-        std::string save_to(schedule_.winner_savepath);
 
         for(const auto & l : abobas_[best].GetLayers())
-            save_to += std::to_string(l.activated_outputs_.Size()) + "_";
+            schedule_.winner_savepath += std::to_string(l.activated_outputs_.Size()) + "_";
 
-        save_to += "correctly_passed_" + std::to_string(abobas_[best].CorrectAnswers()) + "tests.txt";
-        std::fstream file(save_to, std::ios_base::out);
+        schedule_.winner_savepath += "correctly_passed_" + std::to_string(abobas_[best].CorrectAnswers());
+        std::string save_log_to(schedule_.winner_savepath + "log.txt");
+        save_log_to += "tests.txt";
 
+        std::fstream file(schedule_.winner_savepath, std::ios_base::out);
+        std::fstream log_file(save_log_to, std::ios_base::out);
+        if(!file || !log_file) {
+            file.close();
+            log_file.close();
+            throw std::logic_error("TraningGround: Save: specified path doesn't exist");
+        }
         file << abobas_[best];
-
         file.close();
+
+
+        log_file.close();
+
+    }
+
+    void TrainingGround::SaveAccuracy(){
+        for(const auto& aboba : abobas_){
+            accuracy.emplace_back();
+            for(const auto& a : aboba.GetAccuracy())
+                accuracy.back().emplace_back(a);
+        }
     }
 
 
-
-    }
+}
