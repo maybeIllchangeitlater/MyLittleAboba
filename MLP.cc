@@ -131,13 +131,17 @@ namespace s21{
     std::istream &operator>>(std::istream &in, MLP &other){
 
         in >> other.activation_function_name_;
+        std::cout << other.activation_function_name_ << std::endl;
+        other.GetActivationFunction();
         std::vector<size_t> topology;
         size_t t_size;
         in >>  t_size;
+        std::cout << t_size << std::endl;
 
         for(size_t i = 0; i < t_size; ++i) {
             size_t tmp;
             in >> tmp;
+            std::cout << tmp << std::endl;
             topology.push_back(tmp);
         }
 
@@ -163,8 +167,8 @@ namespace s21{
 
     void MLP::GetActivationFunction() {
 
-        std::for_each(activation_function_name_.begin(), activation_function_name_.end(),
-                       [](char& c){ std::tolower(c); }); //to lowercase
+        std::transform(activation_function_name_.begin(), activation_function_name_.end(), activation_function_name_.begin(),
+                       [](char c){ return std::tolower(c); }); //to lowercase
 
         activation_function_name_.erase(std::remove_if(activation_function_name_.begin(), activation_function_name_.end(),
                                                   [](char c){ return (std::isspace(c) || c == '_' || c == '\n'); }),

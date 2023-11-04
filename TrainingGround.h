@@ -18,10 +18,11 @@ namespace s21{
          * @param topologies For each MLP. Input and output (first and last) values must\n
          * match amount of training set inputs and labels(possible outputs)\n Ignored when loading from file
          * @param activation_functions Available options are: sigmoid, ReLU, leaky ReLU, ELU and Tanh\n Defaulted to sigmoid
-         * @param learning_rates Recommended starting value from 0.1 to 0.25\n Defaulted to 0.1
+         * @param learning_rates Recommended starting value for sigmoid from 0.1 to 0.25\n Defaulted to 0.1
          * @param learning_rate_reductions By how much to reduce learning rate
          * @param learning_rate_reduction_frequencies Once per how many epoch to apply\n Defaulted to 0 (never)
          * @param batch_sizes Defaulted to full training dataset
+         * @param log Save log
          */
     struct TrainingConfig {
 
@@ -33,6 +34,7 @@ namespace s21{
         constexpr static const size_t kDefaultBatchSize = SIZE_T_MAX;
 
         bool load = false;
+        bool log = false;
         bool save = true;
         size_t perceptron_counter;
         std::string winner_savepath = __FILE__;

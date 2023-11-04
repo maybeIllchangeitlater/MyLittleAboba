@@ -39,6 +39,8 @@ namespace s21 {
          */
         size_t Predict(const Mx& in);
 
+        const std::string& ActivationFunctionName() { return activation_function_name_; }
+
 
         const std::vector<double>& GetAccuracy() const noexcept { return average_error_; }
 

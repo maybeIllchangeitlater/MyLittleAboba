@@ -155,25 +155,38 @@ namespace s21{
 
         size_t best = FindTheBestOne();
 
+        size_t fix_default = schedule_.winner_savepath.find("TrainingGround.h");
+        if(fix_default != std::string::npos)
+            schedule_.winner_savepath.erase(fix_default);
+
+        schedule_.winner_savepath += abobas_[best].ActivationFunctionName() + "_";
+
         for(const auto & l : abobas_[best].GetLayers())
             schedule_.winner_savepath += std::to_string(l.activated_outputs_.Size()) + "_";
 
         schedule_.winner_savepath += "correctly_passed_" + std::to_string(abobas_[best].CorrectAnswers());
-        std::string save_log_to(schedule_.winner_savepath + "log.txt");
-        save_log_to += "tests.txt";
+
+        if(schedule_.log) {
+            std::string save_log(schedule_.winner_savepath + "log.txt");
+            std::fstream file_log(save_log, std::ios_base::out);
+
+            if(!file_log)
+                throw std::logic_error("TraningGround: Save log: specified path doesn't exist");
+
+            for(const auto& a : abobas_[best].GetAccuracy())
+                file_log << a << " ";
+        }
+
+        schedule_.winner_savepath += "tests.txt" ;
 
         std::fstream file(schedule_.winner_savepath, std::ios_base::out);
-        std::fstream log_file(save_log_to, std::ios_base::out);
-        if(!file || !log_file) {
-            file.close();
-            log_file.close();
+
+
+        if(!file)
             throw std::logic_error("TraningGround: Save: specified path doesn't exist");
-        }
+
         file << abobas_[best];
         file.close();
-
-
-        log_file.close();
 
     }
 
