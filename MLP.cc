@@ -41,7 +41,7 @@ namespace s21{
 
         layers_[layers_.size() - 2].error_ = layers_.back().activated_outputs_ - ideal;
         //dZ = a - Y
-        for(int i = layers_.size() - 3; i >=0; --i){
+        for(std::ptrdiff_t i = layers_.size() - 3; i >=0; --i){
             layers_[i].error_ = layers_[i + 1].error_.MulByTransposed(layers_[i + 1].weights_);
             Mx der = layers_[i + 1].outputs_.Transform(activation_derivative_);
             layers_[i].error_ &= der;
@@ -77,7 +77,7 @@ namespace s21{
         for (size_t e = 0; e < epochs; ++e) {
             auto batch = dl_->CreateSample(batch_size, dist(gen_), DataLoader::kTrain, true);
 
-            for (int b = 0; b < batch_size; ++b) {
+            for (size_t b = 0; b < batch_size; ++b) {
                 FeedForward(batch[b].second);
                 BackPropogation(batch[b].first);
                 error += GetError(batch[b].first);
@@ -135,7 +135,7 @@ namespace s21{
         size_t t_size;
         in >>  t_size;
 
-        for(int i = 0; i < t_size; ++i) {
+        for(size_t i = 0; i < t_size; ++i) {
             size_t tmp;
             in >> tmp;
             topology.push_back(tmp);
@@ -146,7 +146,7 @@ namespace s21{
                                    "Inputs and outputs of preceptron must correspond to ins and outs of "
                                    "dataloader");
 
-        for(int i = 0; i < topology.size() - 1; ++i){
+        for(size_t i = 0; i < topology.size() - 1; ++i){
             Mx w(topology[i], topology[i + 1]);
             Mx b(1, topology[i + 1]);
             in >> w;
@@ -163,15 +163,15 @@ namespace s21{
 
     void MLP::GetActivationFunction() {
 
-        std::transform(activation_function_name_.begin(), activation_function_name_.end(), activation_function_name_.begin(),
-                       [](char c){ return std::tolower(c); }); //to lowercase
+        std::for_each(activation_function_name_.begin(), activation_function_name_.end(),
+                       [](char& c){ std::tolower(c); }); //to lowercase
 
         activation_function_name_.erase(std::remove_if(activation_function_name_.begin(), activation_function_name_.end(),
                                                   [](char c){ return (std::isspace(c) || c == '_' || c == '\n'); }),
                                    activation_function_name_.end()); //remove whitespaces _ and newlines
 
-        activation_ = ActivationFunction::activations_activation_derivatives.at(activation_function_name_.c_str()).first;
-        activation_derivative_ = ActivationFunction::activations_activation_derivatives.at(activation_function_name_.c_str()).second;
+        activation_ = ActivationFunction::activations_activation_derivatives.at(activation_function_name_).first;
+        activation_derivative_ = ActivationFunction::activations_activation_derivatives.at(activation_function_name_).second;
 
     }
 

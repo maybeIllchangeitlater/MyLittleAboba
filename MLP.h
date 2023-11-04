@@ -23,7 +23,7 @@ namespace s21 {
          * @param lr_reduction reduce lr by every
          * @param reduction_frequency epochs
          */
-        void GradientDescent(double lr = 1.0, size_t epochs = 5, size_t batch_size = SIZE_T_MAX, double lr_reduction = 0.0, size_t reduction_frequency = 0);
+        void GradientDescent(double lr = 0.1, size_t epochs = 5, size_t batch_size = SIZE_T_MAX, double lr_reduction = 0.0, size_t reduction_frequency = 0);
 
         /**
          * @brief run the tests

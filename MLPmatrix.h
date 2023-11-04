@@ -22,7 +22,7 @@ namespace s21 {
             }
         }
         MLPMatrix(const size_t rows, const size_t cols, std::mt19937& generator, const double from, const double to)
-        :rows_(rows), cols_(cols){
+                :rows_(rows), cols_(cols){
             std::uniform_real_distribution<double> dist(from, to);
             matrix_ = new double *[rows_];
             matrix_[0] = new double [rows_ * cols_];
@@ -126,30 +126,38 @@ namespace s21 {
 
         MLPMatrix operator*(const double num) const{
             MLPMatrix res(rows_, cols_);
-            std::transform(begin(), end(), res.begin(), [num](double x){ return x * num; });
+            auto it = res.begin();
+            for(const auto &v: *this)
+                *it++ = v * num;
             return res;
         }
         friend MLPMatrix operator*(const double num, const MLPMatrix &other){
             return other * num;
         }
         MLPMatrix &operator*=(const double num) noexcept {
-            std::for_each(begin(), end(), [num](double x){ return x * num; });
+            for(auto &v: *this)
+                v *= num;
             return *this;
         }
 
 
         MLPMatrix operator/(const double num) const{
             MLPMatrix res(rows_, cols_);
-            std::transform(begin(), end(), res.begin(), [num](double x){ return x / num; });
+            auto it = res.begin();
+            for(const auto &v: *this)
+                *it++ = v / num;
             return res;
         }
         friend MLPMatrix operator/(const double num, const MLPMatrix &other){
             MLPMatrix res(other.rows_, other.cols_);
-            std::transform(other.begin(), other.end(), res.begin(), [num](double x){ return num / x; });
+            auto it = res.begin();
+            for(const auto &v: other)
+                *it++ = num / v;
             return res;
         }
         MLPMatrix &operator/=(const double num) noexcept{
-            std::for_each(begin(), end(), [num](double x){ return x * num; });
+            for(auto&v : *this)
+                v /= num;
             return *this;
         }
 

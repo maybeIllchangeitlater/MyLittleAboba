@@ -1,18 +1,40 @@
 #include <iostream>
 //#include "MLP.h"
-//#include "TrainingGround.h"
+#include "TrainingGround.h"
 //#include "TrainingConfig.h"
 #include <random>
 
 int main() {
-    std::mt19937 gen_;
-    std::cout << sizeof(gen_);
-//    s21::DataLoader d(784, 26);
-//    d.FileToData("/Users/monke/Biba/emnist-letters/emnist-letters-train.csv", s21::DataLoader::kTrain);
-//    d.FileToData("/Users/monke/Biba/emnist-letters/emnist-letters-test.csv", s21::DataLoader::kTest);
+    s21::DataLoader d(784, 26);
+    d.FileToData("/Users/monke/Biba/emnist-letters/emnist-letters-train.csv", s21::DataLoader::kTrain);
+    d.FileToData("/Users/monke/Biba/emnist-letters/emnist-letters-test.csv", s21::DataLoader::kTest);
+    s21::TrainingConfig tc;
+    tc.perceptron_counter = 6;
+//    for(size_t i = 0; i < 1; ++i){
+        tc.topologies.push_back(std::vector<size_t>{784, 128, 128, 26});
+        tc.epochs.emplace_back(5);
+        tc.activation_functions.emplace_back("ReLU");
+//    }
+    s21::TrainingGround tg(tc, d);
+    tg.Train();
+    for(const auto& w: tg.correctness_counter){
+        std::cout << w << " ";
+    }
+    std::cout << "out of " << d.MaximumTestsTests() << std::endl;
+
+    size_t i = 1;
+
+    for(const auto&ae : tg.accuracy) {
+            std::cout << i++ << "aboba accuracy over time:" << std::endl;
+            for(const auto& e: ae){
+                std::cout << e << " ";
+            }
+            std::cout << std::endl;
+        }
+
+
 //    Save winner config
     //Wrapper for training ground that allows to run it in circles?
-    //split lr into 3 vectors
     //train few more abobas
 //    std::vector<s21::TrainingConfig> night;
 //    for(size_t i = 0; i < 50; ++i) {

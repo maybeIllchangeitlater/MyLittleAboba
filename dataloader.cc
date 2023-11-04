@@ -50,7 +50,7 @@ void DataLoader::FileToData(const char * filepath, Mode mode, bool shuffle)
         std::shuffle(data.begin(), data.end(), gen_);
 
     file.close();
-    
+
 }
 
 

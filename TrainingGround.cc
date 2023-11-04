@@ -2,6 +2,7 @@
 
 namespace s21{
     TrainingGround::TrainingGround(TrainingConfig& schel, DataLoader& d) : schedule_(schel), dl_(d){
+        EnsureConfiguration();
         schedule_.load && !schedule_.path_to_perceptrons.empty() ? LoadPerceptrons() : CreatePerceptrons();
     }
 
@@ -22,6 +23,7 @@ namespace s21{
 
     }
 
+
     void TrainingGround::LoadPerceptrons() {
 
         for (const auto &s: schedule_.path_to_perceptrons) {
@@ -41,20 +43,51 @@ namespace s21{
 
     }
 
+
     void TrainingGround::CreatePerceptrons() {
 
-        if(!schedule_.perceptron_counter) schedule_.perceptron_counter = 1;
 
         for (size_t i = 0; i < schedule_.perceptron_counter; ++i) {
-            if (dl_.Inputs() != schedule_.topologies[i].front() || dl_.Outputs() != schedule_.topologies[i].back())
+
+            auto & current_topology = i < schedule_.topologies.size() ? schedule_.topologies[i] : schedule_.topologies.back();
+
+            if (dl_.Inputs() != current_topology.front() || dl_.Outputs() != current_topology.back()) {
                 throw std::logic_error("TrainingGround Constructor:"
                                        "Inputs and outputs of perceptron must correspond to ins and outs of "
                                        "dataloader");
+            }
 
-            abobas_.emplace_back(schedule_.topologies[i], &dl_);
+            abobas_.emplace_back(current_topology, &dl_,
+                                 i < schedule_.activation_functions.size()
+                                 ? schedule_.activation_functions[i]
+                                 : schedule_.activation_functions.back());
         }
 
     }
+
+
+    void TrainingGround::EnsureConfiguration() {
+
+        if(schedule_.topologies.empty() && !schedule_.load)
+            throw std::logic_error("TrainingGround Constructor: Specify at least one topology");
+
+        if(!schedule_.perceptron_counter)
+            schedule_.perceptron_counter = std::thread::hardware_concurrency();
+        if(schedule_.epochs.empty())
+            schedule_.epochs.emplace_back(TrainingConfig::kDefaultEpochs);
+        if(schedule_.activation_functions.empty())
+            schedule_.activation_functions.emplace_back(TrainingConfig::kDefaultActivator);
+        if(schedule_.learning_rates.empty())
+            schedule_.learning_rates.emplace_back(TrainingConfig::kDefaultLR);
+        if(schedule_.learning_rate_reductions.empty())
+            schedule_.learning_rate_reductions.emplace_back(TrainingConfig::kDefaultLRReductionRate);
+        if(schedule_.learning_rate_reduction_frequencies.empty())
+            schedule_.learning_rate_reduction_frequencies.emplace_back(TrainingConfig::kDefaultLRReductionFrequency);
+        if(schedule_.batch_sizes.empty())
+            schedule_.batch_sizes.emplace_back(TrainingConfig::kDefaultBatchSize);
+
+    }
+
 
     void TrainingGround::TrainPerceptrons(std::vector<std::thread>& they_learn) {
 
@@ -143,6 +176,7 @@ namespace s21{
         log_file.close();
 
     }
+
 
     void TrainingGround::SaveAccuracy(){
         for(const auto& aboba : abobas_){
