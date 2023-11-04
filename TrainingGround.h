@@ -4,11 +4,12 @@
 #include "MLP.h"
 #include "Dataloader.h"
 #include <ostream>
+
 namespace s21{
         /**
          * @brief Customize training plan for multiple MLPs at once!\n
          * In case of less config inputs than perceptron counter, last parameters, including perceptrons themselves, will be duplicated
-         * @param perceptron_counter How many perceptrons to run\n Defaulted to amount of physical cores\nCreating more threads than cores
+         * @param perceptron_counter How many perceptrons to run\n Defaulted to amount of physical cores\n Creating more threads than cores
          * will lower performance
          * @param epochs How many epochs to run each MLP for\n Defaulted to 5
          * @param load Load perceptrons from file?\n Defaulted to no

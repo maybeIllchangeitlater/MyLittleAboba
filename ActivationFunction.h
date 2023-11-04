@@ -48,8 +48,8 @@ namespace s21 {
 
         ///Exponential Linear Unit\n
         ///Pros: ELU can help with faster convergence and mitigate some of the issues associated with ReLU.\n
-        ///Unlike to ReLU, ELU can produce negative outputs.\n
-        ///Cons: less efficient performance than ReLU and variances\name
+        ///Unlike ReLU, ELU can produce negative outputs.\n
+        ///Cons: less efficient performance than ReLU and variances\n
         static double ELU(const double x) {
             return x > 0 ? x : a_gradient * (std::pow(std::exp(1.0), x) - 1);
         }
@@ -80,13 +80,6 @@ namespace s21 {
         static const std::unordered_map<std::string, std::pair<double (*)(double), double (*)(double)>> activations_activation_derivatives;
 
     };
-//    const std::unordered_map<const char *, std::pair<double (*)(double), double (*)(double)>>
-//            ActivationFunction::activations_activation_derivatives =
-//            {{"sigmoid",   std::make_pair(ActivationFunction::Sigmoid, ActivationFunction::SigmoidDeriv)},
-//             {"tanh",      std::make_pair(ActivationFunction::Tanh, ActivationFunction::TanhDeriv)},
-//             {"relu",      std::make_pair(ActivationFunction::ReLU, ActivationFunction::ReLUDeriv)},
-//             {"leakyrelu", std::make_pair(ActivationFunction::LeakyReLU, ActivationFunction::LeakyReLuDeriv)},
-//             {"elu",       std::make_pair(ActivationFunction::ELU, ActivationFunction::ELUDeriv)}};
 
 }
 #endif //MULTILAYERABOBATRON_UTILS_ACTIVATION_FUNCTION_H_

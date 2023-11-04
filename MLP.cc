@@ -131,17 +131,15 @@ namespace s21{
     std::istream &operator>>(std::istream &in, MLP &other){
 
         in >> other.activation_function_name_;
-        std::cout << other.activation_function_name_ << std::endl;
         other.GetActivationFunction();
+
         std::vector<size_t> topology;
         size_t t_size;
         in >>  t_size;
-        std::cout << t_size << std::endl;
 
         for(size_t i = 0; i < t_size; ++i) {
             size_t tmp;
             in >> tmp;
-            std::cout << tmp << std::endl;
             topology.push_back(tmp);
         }
 
