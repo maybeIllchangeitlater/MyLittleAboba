@@ -3,9 +3,10 @@
 
 namespace s21{
 
-    MatrixMLP::MatrixMLP(std::vector<size_t> topology, DataLoader * dl, const char* activation_function_name) : dl_(dl),
-    activation_function_name_(activation_function_name), gen_(std::random_device()()) {
+    MatrixMLP::MatrixMLP(std::vector<size_t> topology, DataLoader * dl, const char* activation_function_name)
+    : dl_(dl),gen_(std::random_device()()) {
 
+        activation_function_name_ = activation_function_name;
         GetActivationFunction();
 
         for(size_t i = 0; i < topology.size() - 1; ++i){
@@ -20,10 +21,10 @@ namespace s21{
 
     }
 
-    void MatrixMLP::FeedForward(const Mx &in) {
+    void MatrixMLP::FeedForward(const vec &in) {
 
-        layers_[0].activated_outputs_ = in;
         layers_[0].outputs_ = in;
+        layers_[0].activated_outputs_ = in;
 
         for(size_t i = 0; i < layers_.size() - 1; ++i){
             layers_[i + 1].outputs_ = layers_[i].activated_outputs_ * layers_[i].weights_;
@@ -37,7 +38,7 @@ namespace s21{
 
     }
 
-    void MatrixMLP::BackPropogation(const Mx &ideal) {
+    void MatrixMLP::BackPropogation(const vec &ideal) {
 
         layers_[layers_.size() - 2].error_ = layers_.back().activated_outputs_ - ideal;
         //dZ = a - Y
@@ -96,71 +97,71 @@ namespace s21{
     size_t MatrixMLP::Test() {
 
         auto & test_set = dl_->TestData();
-        correct_test_answers = 0;
+        correct_test_answers_ = 0;
 
         for(const auto& input : test_set)
-            correct_test_answers += Debug(input);
+            correct_test_answers_ += Debug(input);
 
-        return correct_test_answers;
+        return correct_test_answers_;
     }
 
-    size_t MatrixMLP::Predict(const s21::Mx &in) {
+    size_t MatrixMLP::Predict(const vec &in) {
         FeedForward(in);
         return GetAnswer();
     }
 
-    std::ostream &operator<<(std::ostream &out, const MatrixMLP &other){
+//    std::ostream &operator<<(std::ostream &out, const MatrixMLP &other){
+//
+//        out << other.activation_function_name_ << " ";
+//        out << other.layers_.size() << " ";
+//
+//        for(const auto & l : other.layers_) {
+//            out << l.activated_outputs_.Cols() << " "; //save topology
+//        }
+//
+//        for(const auto& layer : other.layers_){
+//            out << layer.weights_;
+//            out << layer.biases_;
+//        }
+//
+//        return out;
+//
+//    }
 
-        out << other.activation_function_name_ << " ";
-        out << other.layers_.size() << " ";
 
-        for(const auto & l : other.layers_) {
-            out << l.activated_outputs_.Cols() << " "; //save topology
-        }
-
-        for(const auto& layer : other.layers_){
-            out << layer.weights_;
-            out << layer.biases_;
-        }
-
-        return out;
-
-    }
-
-
-    std::istream &operator>>(std::istream &in, MatrixMLP &other){
-
-        in >> other.activation_function_name_;
-        other.GetActivationFunction();
-
-        std::vector<size_t> topology;
-        size_t t_size;
-        in >>  t_size;
-
-        for(size_t i = 0; i < t_size; ++i) {
-            size_t tmp;
-            in >> tmp;
-            topology.push_back(tmp);
-        }
-
-        if(topology.front() != other.dl_->Inputs() || topology.back() != other.dl_->Outputs())
-            throw std::logic_error("MatrixMLP operator>>:"
-                                   "Inputs and outputs of preceptron must correspond to ins and outs of "
-                                   "dataloader");
-
-        for(size_t i = 0; i < topology.size() - 1; ++i){
-            Mx w(topology[i], topology[i + 1]);
-            Mx b(1, topology[i + 1]);
-            in >> w;
-            in >> b;
-            other.layers_.emplace_back(std::move(w), std::move(b));
-        }
-
-        other.layers_.emplace_back();
-
-        return in;
-
-    }
+//    std::istream &operator>>(std::istream &in, MatrixMLP &other){
+//
+//        in >> other.activation_function_name_;
+//        other.GetActivationFunction();
+//
+//        std::vector<size_t> topology;
+//        size_t t_size;
+//        in >>  t_size;
+//
+//        for(size_t i = 0; i < t_size; ++i) {
+//            size_t tmp;
+//            in >> tmp;
+//            topology.push_back(tmp);
+//        }
+//
+//        if(topology.front() != other.dl_->Inputs() || topology.back() != other.dl_->Outputs())
+//            throw std::logic_error("MatrixMLP operator>>:"
+//                                   "Inputs and outputs of preceptron must correspond to ins and outs of "
+//                                   "dataloader");
+//
+//        for(size_t i = 0; i < topology.size() - 1; ++i){
+//            Mx w(topology[i], topology[i + 1]);
+//            Mx b(1, topology[i + 1]);
+//            in >> w;
+//            in >> b;
+//            other.layers_.emplace_back(std::move(w), std::move(b));
+//        }
+//
+//        other.layers_.emplace_back();
+//
+//        return in;
+//
+//    }
 
 
     void MatrixMLP::GetActivationFunction() {
@@ -177,21 +178,76 @@ namespace s21{
 
     }
 
+    void MatrixMLP::Out(std::ostream &out) const{
 
-    double MatrixMLP::GetError(const Mx& ideal){
+        out << TrainingConfig::kMatrix << " ";
+
+        out << activation_function_name_ << " ";
+        out << layers_.size() << " ";
+
+        for(const auto & l : layers_) {
+            out << l.activated_outputs_.Cols() << " "; //save topology
+        }
+
+        for(const auto& layer : layers_){
+            out << layer.weights_;
+            out << layer.biases_;
+        }
+
+    }
+
+    void MatrixMLP::In(std::istream &in){
+        in >> activation_function_name_;
+        GetActivationFunction();
+
+        std::vector<size_t> topology;
+        size_t t_size;
+        in >>  t_size;
+
+        for(size_t i = 0; i < t_size; ++i) {
+            size_t tmp;
+            in >> tmp;
+            topology.push_back(tmp);
+        }
+
+        if(topology.front() != dl_->Inputs() || topology.back() != dl_->Outputs())
+            throw std::logic_error("MatrixMLP operator>>:"
+                                   "Inputs and outputs of preceptron must correspond to ins and outs of "
+                                   "dataloader");
+
+        for(size_t i = 0; i < topology.size() - 1; ++i){
+            Mx w(topology[i], topology[i + 1]);
+            Mx b(1, topology[i + 1]);
+            in >> w;
+            in >> b;
+            layers_.emplace_back(std::move(w), std::move(b));
+        }
+
+        layers_.emplace_back();
+    }
+
+    std::vector<size_t> MatrixMLP::Topology(){
+        std::vector<size_t> res;
+        for(const auto& v: layers_)
+            res.emplace_back(v.outputs_.Size());
+        return res;
+    }
+
+
+    double MatrixMLP::GetError(const vec& ideal){
         return (layers_.back().activated_outputs_ - ideal).Abs().Sum()
                /static_cast<double>(layers_.back().activated_outputs_.Size());
     }
 
-    bool MatrixMLP::Debug(const std::pair<Mx, Mx>& in){
+    bool MatrixMLP::Debug(const std::pair<vec, vec>& in){
         FeedForward(in.second);
         return WasRight(in.first);
     }
 
 
-    bool MatrixMLP::WasRight(const Mx &ideal) {
+    bool MatrixMLP::WasRight(const vec &ideal) {
         size_t i = 0;
-        for (; i < ideal.Cols() && !ideal(0, i); ++i){}
+        for (; i < ideal.size() && !ideal[i]; ++i){}
 
         size_t ans = GetAnswer();
         return ans == i;

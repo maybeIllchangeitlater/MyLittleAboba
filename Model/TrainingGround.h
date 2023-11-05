@@ -11,6 +11,7 @@ namespace s21{
          * In case of less config inputs than perceptron counter, last parameters, including perceptrons themselves, will be duplicated
          * @param perceptron_counter How many perceptrons to run\n Defaulted to amount of physical cores\n Creating more threads than cores
          * will lower performance
+         * @param mlp_types Types of MLP. kMatrix for matrix, kGraph for graph.\n Defaulted to kMatrix
          * @param epochs How many epochs to run each MLP for\n Defaulted to 5
          * @param load Load perceptrons from file?\n Defaulted to no
          * @param path_to_perceptrons Load from where?
@@ -27,18 +28,25 @@ namespace s21{
          */
     struct TrainingConfig {
 
+        enum MLPType{
+            kMatrix,
+            kGraph
+        };
+
         constexpr static const size_t kDefaultEpochs = 5;
         constexpr static const char* kDefaultActivator = "sigmoid";
         constexpr static const double kDefaultLR = 0.1;
         constexpr static const double kDefaultLRReductionRate = 0.0;
         constexpr static const size_t kDefaultLRReductionFrequency = 0;
         constexpr static const size_t kDefaultBatchSize = SIZE_T_MAX;
+        constexpr static const MLPType kDefaultMLPType = kMatrix;
 
         bool load = false;
         bool log = false;
         bool save = true;
         size_t perceptron_counter;
         std::string winner_savepath = __FILE__;
+        std::vector<MLPType> mlp_types;
         std::vector<const char *> path_to_perceptrons;
         std::vector<const char *> activation_functions;
         std::vector<double> learning_rates;
@@ -57,6 +65,7 @@ namespace s21{
         TrainingGround(TrainingGround&&) = delete;
         TrainingGround operator=(const TrainingGround&) = delete;
         TrainingGround operator=(TrainingGround&&) = delete;
+        ~TrainingGround();
         /**
          * @brief launch MLP training with preloaded config\n
          */
@@ -69,22 +78,38 @@ namespace s21{
         void LoadPerceptrons();
         void CreatePerceptrons();
         /**
+         * @brief constructs an instance of MLPInterface based on either MatrixMLP or GraphMLP
+         * @return allocated and constructed * to model\nImportant Allocates memory DO NOT DISCARD
+         */
+        template<typename ... Args>
+        [[nodiscard]]MLPInterface* ConstructModel(TrainingConfig::MLPType type, Args&&... args){
+
+            MLPInterface * model;
+
+            if(type == TrainingConfig::kMatrix){
+                model = ::new MatrixMLP(std::forward<Args>(args)...);
+            }else if(type == TrainingConfig::kGraph){
+                model = ::new MatrixMLP(std::forward<Args>(args)...);
+            }
+
+            return model;
+
+        }
+        /**
          * @brief set unspecified values to default
          */
         void EnsureConfiguration();
-        /**
-         * @brief  In case of less config inputs than perceptron counter, duplicate last input(or default) parameters
-         */
         void TrainPerceptrons(std::vector<std::thread>& they_learn);
         void TestPerceptrons(std::vector<std::thread>& they_learn);
         size_t FindTheBestOne();
-        void SaveAccuracy();
+        void FindAccuracy();
         void SaveTheBestOne(size_t best);
+        void SaveLog(size_t best);
 
 
         TrainingConfig& schedule_;
         DataLoader &dl_;
-        std::vector<MatrixMLP> abobas_;
+        std::vector<MLPInterface *> abobas_;
 
     };
 
@@ -92,3 +117,5 @@ namespace s21{
 
 
 #endif //MULTILAYERABOBATRON_MODEL_TRAININGGROUND_H_
+
+///todo load type, change to interafce * friendly

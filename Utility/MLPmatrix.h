@@ -32,6 +32,10 @@ namespace s21 {
                 for(size_t j = 0; j < cols_; ++j) matrix_[i][j] = dist(generator);
             }
         }
+        MLPMatrix(const std::vector<double>& cpy)
+        : MLPMatrix(1, cpy.size()) {
+            std::memcpy(matrix_[0], cpy.data(), cpy.size() * sizeof(double));
+        }
         MLPMatrix(const MLPMatrix &other): MLPMatrix(other.rows_, other.cols_) {
             if(matrix_)
                 std::memcpy(matrix_[0], other.matrix_[0], sizeof(double) * cols_ * rows_);
@@ -56,6 +60,11 @@ namespace s21 {
             other.matrix_ = nullptr;
             return *this;
         }
+        MLPMatrix& operator=(const std::vector<double>& other){
+            MLPMatrix tmp(other);
+            *this = std::move(tmp);
+            return *this;
+        }
         ~MLPMatrix(){
             if(matrix_) delete[] matrix_[0];
             delete[] matrix_;
@@ -73,11 +82,17 @@ namespace s21 {
         }
 
 
-        MLPMatrix operator-(const MLPMatrix &other) const{
+        template<typename Iterable>
+        MLPMatrix operator-(const Iterable &other) const{
             MLPMatrix res(rows_, cols_);
             std::transform(begin(), end(), other.begin(), res.begin(), std::minus<>());
             return res;
         }
+//        MLPMatrix operator-(const std::vector<double>& other) const{
+//            MLPMatrix res(rows_, cols_);
+//            std::transform(begin(), end(), other.begin(), res.begin(), std::minus<>());
+//            return res;
+//        }
         MLPMatrix &operator-=(const MLPMatrix &other){
             std::transform(begin(), end(), other.begin(), begin(), std::minus<>());
             return *this;

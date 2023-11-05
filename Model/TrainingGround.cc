@@ -7,6 +7,12 @@ namespace s21{
     }
 
 
+    TrainingGround::~TrainingGround() {
+        for(auto& a: abobas_)
+            delete a;
+    }
+
+
     void TrainingGround::Train() {
 
         std::vector<std::thread> they_learn;
@@ -17,7 +23,8 @@ namespace s21{
         TestPerceptrons(they_learn);
         they_learn.clear();
 
-        SaveAccuracy();
+        FindAccuracy();
+
         size_t best = FindTheBestOne();
         if(schedule_.save && !schedule_.winner_savepath.empty())
             SaveTheBestOne(best);
@@ -30,8 +37,13 @@ namespace s21{
         for (const auto &s: schedule_.path_to_perceptrons) {
             std::fstream file(s, std::ios_base::in);
             if (file) {
-                abobas_.emplace_back(&dl_);
-                file >> abobas_.back();
+                size_t model_t;
+                file >> model_t;
+
+                abobas_.emplace_back(ConstructModel(static_cast<TrainingConfig::MLPType>(model_t), &dl_));
+
+                file >> *abobas_.back();
+
                 file.close();
             } else {
                 throw std::invalid_argument("TrainingGround Constructor: load:"
@@ -50,18 +62,25 @@ namespace s21{
 
         for (size_t i = 0; i < schedule_.perceptron_counter; ++i) {
 
-            auto & current_topology = i < schedule_.topologies.size() ? schedule_.topologies[i] : schedule_.topologies.back();
+            auto & topology = i < schedule_.topologies.size()
+                    ? schedule_.topologies[i]
+                    : schedule_.topologies.back();
 
-            if (dl_.Inputs() != current_topology.front() || dl_.Outputs() != current_topology.back()) {
+            if (dl_.Inputs() != topology.front() || dl_.Outputs() != topology.back()) {
                 throw std::logic_error("TrainingGround Constructor:"
                                        "Inputs and outputs of perceptron must correspond to ins and outs of "
                                        "dataloader");
             }
 
-            abobas_.emplace_back(current_topology, &dl_,
-                                 i < schedule_.activation_functions.size()
-                                 ? schedule_.activation_functions[i]
-                                 : schedule_.activation_functions.back());
+            auto& activation = i < schedule_.activation_functions.size()
+                                        ? schedule_.activation_functions[i]
+                                        : schedule_.activation_functions.back();
+            auto& model_type = i < schedule_.mlp_types.size()
+                                       ? schedule_.mlp_types[i]
+                                       : schedule_.mlp_types.back();
+
+            abobas_.emplace_back(ConstructModel(model_type, topology, &dl_, activation));
+
         }
 
     }
@@ -74,6 +93,8 @@ namespace s21{
 
         if(!schedule_.perceptron_counter)
             schedule_.perceptron_counter = std::thread::hardware_concurrency();
+        if(schedule_.mlp_types.empty())
+            schedule_.mlp_types.emplace_back(TrainingConfig::kDefaultMLPType);
         if(schedule_.epochs.empty())
             schedule_.epochs.emplace_back(TrainingConfig::kDefaultEpochs);
         if(schedule_.activation_functions.empty())
@@ -94,7 +115,7 @@ namespace s21{
 
         size_t counter = 0;
 
-        for(MatrixMLP &aboba : abobas_){ //alternatively [std::min(size -1, counter)], its a mess either ways
+        for(auto & aboba : abobas_){ //alternatively [std::min(size -1, counter)], its a mess either ways
             size_t epochs = counter < schedule_.epochs.size()
                     ? schedule_.epochs[counter]
                     : schedule_.epochs.back();
@@ -114,7 +135,7 @@ namespace s21{
 
             auto functor = [&aboba, epochs, batch_size, learning_rate,
                     learning_rate_reduction, reduction_frequency](){
-                aboba.GradientDescent(learning_rate, epochs, batch_size,
+                aboba->GradientDescent(learning_rate, epochs, batch_size,
                                       learning_rate_reduction, reduction_frequency);};
 
             they_learn.emplace_back(std::move(functor));
@@ -126,8 +147,8 @@ namespace s21{
     }
     void TrainingGround::TestPerceptrons(std::vector<std::thread> &they_learn) {
 
-        for(MatrixMLP &aboba : abobas_){
-            auto functor = [&aboba](){ aboba.Test(); };
+        for(auto &aboba : abobas_){
+            auto functor = [&aboba](){ aboba->Test(); };
             they_learn.emplace_back(std::move(functor));
         }
 
@@ -139,10 +160,10 @@ namespace s21{
     size_t TrainingGround::FindTheBestOne(){
 
         size_t best_ind = 0;
-        size_t correct_ans = correctness_counter.emplace_back(abobas_[0].CorrectAnswers());
+        size_t correct_ans = correctness_counter.emplace_back(abobas_[0]->CorrectAnswers());
 
         for (size_t i = 1; i < abobas_.size(); ++i){
-            correctness_counter.emplace_back(abobas_[i].CorrectAnswers());
+            correctness_counter.emplace_back(abobas_[i]->CorrectAnswers());
             if(correct_ans < correctness_counter.back()){
                 correct_ans = correctness_counter.back();
                 best_ind = i;
@@ -158,23 +179,15 @@ namespace s21{
         if(fix_default != std::string::npos)
             schedule_.winner_savepath.erase(fix_default);
 
-        schedule_.winner_savepath += abobas_[best].ActivationFunctionName() + "_";
+        schedule_.winner_savepath += abobas_[best]->ActivationFunctionName() + "_";
 
-        for(const auto & l : abobas_[best].GetLayers())
-            schedule_.winner_savepath += std::to_string(l.activated_outputs_.Size()) + "_";
+        for(const auto & t : abobas_[best]->Topology())
+            schedule_.winner_savepath += std::to_string(t) + "_";
 
-        schedule_.winner_savepath += "correctly_passed_" + std::to_string(abobas_[best].CorrectAnswers());
+        schedule_.winner_savepath += "correctly_passed_" + std::to_string(abobas_[best]->CorrectAnswers());
 
-        if(schedule_.log) {
-            std::string save_log(schedule_.winner_savepath + "log.txt");
-            std::fstream file_log(save_log, std::ios_base::out);
-
-            if(!file_log)
-                throw std::logic_error("TraningGround: Save log: specified path doesn't exist");
-
-            for(const auto& a : abobas_[best].GetAccuracy())
-                file_log << a << " ";
-        }
+        if(schedule_.log)
+            SaveLog(best);
 
         schedule_.winner_savepath += "tests.txt" ;
 
@@ -189,11 +202,24 @@ namespace s21{
 
     }
 
+    void TrainingGround::SaveLog(size_t best){
 
-    void TrainingGround::SaveAccuracy(){
+        std::string save_log(schedule_.winner_savepath + "log.txt");
+        std::fstream file_log(save_log, std::ios_base::out);
+
+        if(!file_log)
+            throw std::logic_error("TraningGround: Save log: specified path doesn't exist");
+
+        for(const auto& a : abobas_[best]->GetAccuracy())
+            file_log << a << " ";
+
+    }
+
+
+    void TrainingGround::FindAccuracy(){
         for(const auto& aboba : abobas_){
             accuracy.emplace_back();
-            for(const auto& a : aboba.GetAccuracy())
+            for(const auto& a : aboba->GetAccuracy())
                 accuracy.back().emplace_back(a);
         }
     }
