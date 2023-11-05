@@ -1,7 +1,7 @@
 #ifndef MULTILAYERABOBATRON_MODEL_TRAININGGROUND_H_
 #define MULTILAYERABOBATRON_MODEL_TRAININGGROUND_H_
 #include <thread>
-#include "MatrixMLP/MLP.h"
+#include "MatrixMLP/MatrixMLP.h"
 #include "Dataloader.h"
 #include <ostream>
 
@@ -84,7 +84,7 @@ namespace s21{
 
         TrainingConfig& schedule_;
         DataLoader &dl_;
-        std::vector<MLP> abobas_;
+        std::vector<MatrixMLP> abobas_;
 
     };
 

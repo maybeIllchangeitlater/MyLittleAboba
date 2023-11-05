@@ -94,7 +94,7 @@ namespace s21{
 
         size_t counter = 0;
 
-        for(MLP &aboba : abobas_){ //alternatively [std::min(size -1, counter)], its a mess either ways
+        for(MatrixMLP &aboba : abobas_){ //alternatively [std::min(size -1, counter)], its a mess either ways
             size_t epochs = counter < schedule_.epochs.size()
                     ? schedule_.epochs[counter]
                     : schedule_.epochs.back();
@@ -126,7 +126,7 @@ namespace s21{
     }
     void TrainingGround::TestPerceptrons(std::vector<std::thread> &they_learn) {
 
-        for(MLP &aboba : abobas_){
+        for(MatrixMLP &aboba : abobas_){
             auto functor = [&aboba](){ aboba.Test(); };
             they_learn.emplace_back(std::move(functor));
         }
