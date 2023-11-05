@@ -3,14 +3,12 @@
 
 #include "../../Utility/ActivationFunction.h"
 #include "MLayer.h"
-#include "../TrainingGround.h"
-#include "../MLPInteraface.h"
+#include "../MLPCore.h"
 #include "../Dataloader.h"
 
 namespace s21 {
-    class MatrixMLP : public MLPInterface{
+    class MatrixMLP : public MLPCore{
     public:
-        using Base = MLPInterface;
         explicit MatrixMLP(s21::DataLoader * d) : dl_(d){}
         explicit MatrixMLP(std::vector<size_t> topology, s21::DataLoader * dl, const char* activation_function = "sigmoid");
         MatrixMLP(const MatrixMLP& other) = default;
@@ -43,11 +41,6 @@ namespace s21 {
          */
         std::vector<size_t> Topology() override;
 
-//        const std::vector<MLayer>& GetLayers(){ return layers_; }
-
-//        friend std::ostream &operator<<(std::ostream &out, const MatrixMLP &other);
-
-//        friend std::istream &operator>>(std::istream &in, MatrixMLP &other);
     protected:
         void Out(std::ostream &out) const override;
         void In(std::istream &in) override;
@@ -76,14 +69,10 @@ namespace s21 {
         double GetError(const std::vector<double>& ideal);
 
 
-//        size_t correct_test_answers;
-        double lr_;
         s21::DataLoader* dl_;
         double(*activation_)(double);
         double(*activation_derivative_)(double);
         std::vector<MLayer> layers_;
-//        std::vector<double> average_error_;
-//        std::string activation_function_name_;
         std::mt19937 gen_;
 
     };

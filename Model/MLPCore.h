@@ -1,13 +1,17 @@
-#ifndef MULTILAYERABOBATRON_MODEL_MLPINTERAFACE_H
-#define MULTILAYERABOBATRON_MODEL_MLPINTERAFACE_H
+#ifndef MULTILAYERABOBATRON_MODEL_MLPCORE_H
+#define MULTILAYERABOBATRON_MODEL_MLPCORE_H
 #include <string>
 #include <vector>
 
 namespace s21{
-    class MLPInterface{ //actually just a normal abstract class
+    class MLPCore{ //abstract
     public:
+        enum MLPType{
+            kMatrix,
+            kGraph
+        };
 
-        virtual ~MLPInterface() = default;
+        virtual ~MLPCore() = default;
         /**
          * @brief Get that error down
          * @param lr learning rate. defaulted to 0.03
@@ -45,14 +49,14 @@ namespace s21{
         /**
          * @brief save MLP
          */
-        friend std::ostream &operator<<(std::ostream &out, const MLPInterface &other){
+        friend std::ostream &operator<<(std::ostream &out, const MLPCore &other){
             other.Out(out);
             return out;
         }
         /**
          * @brief load MLP
          */
-        friend std::istream &operator>>(std::istream &in, MLPInterface &other){
+        friend std::istream &operator>>(std::istream &in, MLPCore &other){
             other.In(in);
             return in;
         }
@@ -63,12 +67,11 @@ namespace s21{
         ///for >>
         virtual void In(std::istream &in) = 0;
 
+        double lr_;
         size_t correct_test_answers_;
-
         std::string activation_function_name_;
-
         std::vector<double> average_error_;
     };
 }
 
-#endif //MULTILAYERABOBATRON_MODEL_MLPINTERAFACE_H
+#endif //MULTILAYERABOBATRON_MODEL_MLPCORE_H

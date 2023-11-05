@@ -1,21 +1,20 @@
 #ifndef MULTILAYERABOBATRON_MODEL_MATRIXMLP_MLAYER_H_
 #define MULTILAYERABOBATRON_MODEL_MATRIXMLP_MLAYER_H_
-#include "../../Utility/MLPmatrix.h"
+#include "../../Utility/Matrix.h"
 namespace s21 {
-    using Mx = MLPMatrix;
     struct MLayer {
         MLayer() = default;
-        MLayer(Mx &&weights, Mx&& biases) : weights_(std::move(weights)), biases_(std::move(biases)) {}
+        MLayer(Matrix &&weights, Matrix&& biases) : weights_(std::move(weights)), biases_(std::move(biases)) {}
         MLayer(const MLayer&) = default;
         MLayer(MLayer&&) = default;
         MLayer &operator=(const MLayer&) = default;
         MLayer &operator=(MLayer&&) = default;
 
-        Mx weights_;
-        Mx biases_;
-        Mx activated_outputs_;
-        Mx error_;
-        Mx outputs_;
+        Matrix weights_;
+        Matrix biases_;
+        Matrix activated_outputs_;
+        Matrix error_;
+        Matrix outputs_;
     };
 }
 #endif //MULTILAYERABOBATRON_MODEL_MATRIXMLP_MLAYER_H_

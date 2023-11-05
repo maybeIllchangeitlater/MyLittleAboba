@@ -1,6 +1,7 @@
 #ifndef MULTILAYERABOBATRON_MODEL_TRAININGGROUND_H_
 #define MULTILAYERABOBATRON_MODEL_TRAININGGROUND_H_
 #include <thread>
+#include "MLPCore.h"
 #include "MatrixMLP/MatrixMLP.h"
 #include "Dataloader.h"
 #include <ostream>
@@ -28,18 +29,14 @@ namespace s21{
          */
     struct TrainingConfig {
 
-        enum MLPType{
-            kMatrix,
-            kGraph
-        };
-
+        using MLPType = MLPCore::MLPType;
         constexpr static const size_t kDefaultEpochs = 5;
         constexpr static const char* kDefaultActivator = "sigmoid";
         constexpr static const double kDefaultLR = 0.1;
         constexpr static const double kDefaultLRReductionRate = 0.0;
         constexpr static const size_t kDefaultLRReductionFrequency = 0;
         constexpr static const size_t kDefaultBatchSize = SIZE_T_MAX;
-        constexpr static const MLPType kDefaultMLPType = kMatrix;
+        constexpr static const MLPType kDefaultMLPType = MLPType::kMatrix;
 
         bool load = false;
         bool log = false;
@@ -82,15 +79,16 @@ namespace s21{
          * @return allocated and constructed * to model\nImportant Allocates memory DO NOT DISCARD
          */
         template<typename ... Args>
-        [[nodiscard]]MLPInterface* ConstructModel(TrainingConfig::MLPType type, Args&&... args){
+        [[nodiscard]]MLPCore* ConstructModel(TrainingConfig::MLPType, Args&&... args){
 
-            MLPInterface * model;
+            MLPCore * model;
+            model = new MatrixMLP(std::forward<Args>(args)...);
 
-            if(type == TrainingConfig::kMatrix){
-                model = ::new MatrixMLP(std::forward<Args>(args)...);
-            }else if(type == TrainingConfig::kGraph){
-                model = ::new MatrixMLP(std::forward<Args>(args)...);
-            }
+//            if(type == TrainingConfig::kMatrix){
+//                model = new s21::MatrixMLP(std::forward<Args>(args)...);
+//            }else if(type == TrainingConfig::kGraph){
+//                model = ::new MatrixMLP(std::forward<Args>(args)...);
+//            }
 
             return model;
 
@@ -109,7 +107,7 @@ namespace s21{
 
         TrainingConfig& schedule_;
         DataLoader &dl_;
-        std::vector<MLPInterface *> abobas_;
+        std::vector<MLPCore *> abobas_;
 
     };
 

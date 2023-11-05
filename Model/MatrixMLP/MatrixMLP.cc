@@ -13,15 +13,15 @@ namespace s21{
             //initialize layer weights with small random values
             //using Xavier initialization
             //initial biases are 0s
-            layers_.emplace_back(Mx(topology[i], topology[i + 1], gen_,
+            layers_.emplace_back(Matrix(topology[i], topology[i + 1], gen_,
                                            0.0, (2.0/std::sqrt(topology[i] * topology[i + 1]))),
-                                 Mx(1, topology[i + 1]));
+                                 Matrix(1, topology[i + 1]));
         }
         layers_.emplace_back();
 
     }
 
-    void MatrixMLP::FeedForward(const vec &in) {
+    void MatrixMLP::FeedForward(const std::vector<double> &in) {
 
         layers_[0].outputs_ = in;
         layers_[0].activated_outputs_ = in;
@@ -38,13 +38,13 @@ namespace s21{
 
     }
 
-    void MatrixMLP::BackPropogation(const vec &ideal) {
+    void MatrixMLP::BackPropogation(const std::vector<double> &ideal) {
 
         layers_[layers_.size() - 2].error_ = layers_.back().activated_outputs_ - ideal;
         //dZ = a - Y
         for(std::ptrdiff_t i = layers_.size() - 3; i >=0; --i){
             layers_[i].error_ = layers_[i + 1].error_.MulByTransposed(layers_[i + 1].weights_);
-            Mx der = layers_[i + 1].outputs_.Transform(activation_derivative_);
+            Matrix der = layers_[i + 1].outputs_.Transform(activation_derivative_);
             layers_[i].error_ &= der;
             //dZi = dZi+1 * W.T hadamard product with ActDeriv(Zi) python - dZi = dZi+i.dot(W.T) * ActDeriv(Zi)
         }
@@ -56,7 +56,7 @@ namespace s21{
     void MatrixMLP::UpdateWeights() {
 
         for (size_t i = 0; i < layers_.size() - 1; ++i) {
-            Mx weight_gradients = layers_[i].activated_outputs_.MulSelfTranspose(layers_[i].error_);
+            Matrix weight_gradients = layers_[i].activated_outputs_.MulSelfTranspose(layers_[i].error_);
             //dW = a.T * dZ
             weight_gradients *= lr_;
             layers_[i].weights_ -= weight_gradients;
@@ -105,7 +105,7 @@ namespace s21{
         return correct_test_answers_;
     }
 
-    size_t MatrixMLP::Predict(const vec &in) {
+    size_t MatrixMLP::Predict(const std::vector<double> &in) {
         FeedForward(in);
         return GetAnswer();
     }
@@ -180,7 +180,7 @@ namespace s21{
 
     void MatrixMLP::Out(std::ostream &out) const{
 
-        out << TrainingConfig::kMatrix << " ";
+        out << kMatrix << " ";
 
         out << activation_function_name_ << " ";
         out << layers_.size() << " ";
@@ -197,6 +197,7 @@ namespace s21{
     }
 
     void MatrixMLP::In(std::istream &in){
+
         in >> activation_function_name_;
         GetActivationFunction();
 
@@ -216,8 +217,8 @@ namespace s21{
                                    "dataloader");
 
         for(size_t i = 0; i < topology.size() - 1; ++i){
-            Mx w(topology[i], topology[i + 1]);
-            Mx b(1, topology[i + 1]);
+            Matrix w(topology[i], topology[i + 1]);
+            Matrix b(1, topology[i + 1]);
             in >> w;
             in >> b;
             layers_.emplace_back(std::move(w), std::move(b));
@@ -234,18 +235,18 @@ namespace s21{
     }
 
 
-    double MatrixMLP::GetError(const vec& ideal){
+    double MatrixMLP::GetError(const std::vector<double>& ideal){
         return (layers_.back().activated_outputs_ - ideal).Abs().Sum()
                /static_cast<double>(layers_.back().activated_outputs_.Size());
     }
 
-    bool MatrixMLP::Debug(const std::pair<vec, vec>& in){
+    bool MatrixMLP::Debug(const std::pair<std::vector<double>, std::vector<double>>& in){
         FeedForward(in.second);
         return WasRight(in.first);
     }
 
 
-    bool MatrixMLP::WasRight(const vec &ideal) {
+    bool MatrixMLP::WasRight(const std::vector<double> &ideal) {
         size_t i = 0;
         for (; i < ideal.size() && !ideal[i]; ++i){}
 

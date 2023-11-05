@@ -4,12 +4,10 @@
 #include <vector>
 #include <fstream>
 #include <sstream>
-//#include "../Utility/MLPmatrix.h"
 #include <iostream>
 #include <random>
 
 namespace s21{
-    using vec = std::vector<double>;
     class DataLoader{
 public:
     enum Mode{
@@ -25,11 +23,11 @@ public:
     /**
      * @brief returns entire train dataset
      */
-    const std::vector<std::pair<vec, vec>>& Data() const noexcept { return data_; }
+    const std::vector<std::pair<std::vector<double>, std::vector<double>>>& Data() const noexcept { return data_; }
      /**
       * @brief returns entire test dataset
       */
-     const std::vector<std::pair<vec, vec>>& TestData() const noexcept {return test_data_;}
+     const std::vector<std::pair<std::vector<double>, std::vector<double>>>& TestData() const noexcept {return test_data_;}
     /**
      * @brief loads dataset(entire dataset)
      * @param filepath path to dataset
@@ -44,7 +42,8 @@ public:
      * @param mode test kTest or train kTrain dataset
      * @param shuffle sample
      */
-    std::vector<std::pair<vec, vec>> CreateSample(size_t batch_size = SIZE_T_MAX, size_t start_from = 0,Mode mode = kTrain, bool shuffle = false);
+    std::vector<std::pair<std::vector<double>, std::vector<double>>> CreateSample
+    (size_t batch_size = SIZE_T_MAX, size_t start_from = 0,Mode mode = kTrain, bool shuffle = false);
     /**
      * @brief Get maximum possible amount of samples from learning dataset
      */
@@ -64,8 +63,8 @@ public:
 private:
     size_t in_;
     size_t out_;
-    std::vector<std::pair<vec, vec>> data_;
-    std::vector<std::pair<vec, vec>> test_data_;
+    std::vector<std::pair<std::vector<double>, std::vector<double>>> data_;
+    std::vector<std::pair<std::vector<double>, std::vector<double>>> test_data_;
     std::mt19937 gen_;
 
 };

@@ -2,7 +2,7 @@
 #define MULTILAYERABOBATRON_UTILS_ACTIVATION_FUNCTION_H_
 #include <cmath>
 #include <unordered_map>
-#include "MLPmatrix.h"
+#include "Matrix.h"
 
 namespace s21 {
     class ActivationFunction {
@@ -72,8 +72,8 @@ namespace s21 {
 
 
         ///converts a vector of raw scores into a probability distribution
-        static s21::MLPMatrix Softmax(const s21::MLPMatrix &x) {
-            s21::MLPMatrix exp_x = x.Exp();
+        static Matrix Softmax(const Matrix &x) {
+            Matrix exp_x = x.Exp();
             return exp_x / (exp_x.Sum());
         }
 

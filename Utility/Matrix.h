@@ -1,5 +1,5 @@
-#ifndef MULTILAYERABOBATRON_UTILS_MLPMATRIX_H_
-#define MULTILAYERABOBATRON_UTILS_MLPMATRIX_H_
+#ifndef MULTILAYERABOBATRON_UTILS_MATRIX_H_
+#define MULTILAYERABOBATRON_UTILS_MATRIX_H_
 
 #include <cmath>
 #include <cstring>  //for memcpy
@@ -8,11 +8,14 @@
 #include <functional>
 
 namespace s21 {
-    class MLPMatrix {
+    class Matrix {
     public:
 
-        MLPMatrix() noexcept: rows_(0), cols_(0), matrix_(nullptr){}
-        explicit MLPMatrix(const size_t rows, const size_t cols)  : rows_(rows), cols_(cols) {
+        Matrix() noexcept: rows_(0), cols_(0), matrix_(nullptr){}
+        /**
+         * @brief constructs rows by cols 0 filled matrix
+         */
+        explicit Matrix(const size_t rows, const size_t cols)  : rows_(rows), cols_(cols) {
             if(rows_ && cols_) {
                 matrix_ = new double *[rows_];
                 matrix_[0] = new double[rows_ * cols_]();
@@ -21,7 +24,11 @@ namespace s21 {
                 matrix_ = nullptr;
             }
         }
-        MLPMatrix(const size_t rows, const size_t cols, std::mt19937& generator, const double from, const double to)
+        /**
+         * @brief constructs a matrix filled with random values in range(from, to)\n
+         * using generator of type std::mt19937
+         */
+        Matrix(const size_t rows, const size_t cols, std::mt19937& generator, const double from, const double to)
                 :rows_(rows), cols_(cols){
             std::uniform_real_distribution<double> dist(from, to);
             matrix_ = new double *[rows_];
@@ -32,26 +39,33 @@ namespace s21 {
                 for(size_t j = 0; j < cols_; ++j) matrix_[i][j] = dist(generator);
             }
         }
-        MLPMatrix(const std::vector<double>& cpy)
-        : MLPMatrix(1, cpy.size()) {
-            std::memcpy(matrix_[0], cpy.data(), cpy.size() * sizeof(double));
+        /**
+         * @brief Constructs vector-like matrix(1 by x where x is iterable object size)\n
+         * Object must be iterable, have .size() method\n
+         * and have iterator dereference value implicitly convertable to double\n
+         */
+        template<typename Iterable,
+                typename = std::enable_if_t<std::is_convertible<decltype(*std::begin(std::declval<Iterable>())), double>::value>>
+        Matrix(const Iterable& other)
+        : Matrix(1, other.size()) {
+            std::copy(other.begin(), other.end(), begin());
         }
-        MLPMatrix(const MLPMatrix &other): MLPMatrix(other.rows_, other.cols_) {
+        Matrix(const Matrix &other): Matrix(other.rows_, other.cols_) {
             if(matrix_)
                 std::memcpy(matrix_[0], other.matrix_[0], sizeof(double) * cols_ * rows_);
         }
-        MLPMatrix(MLPMatrix &&other) noexcept: rows_(other.rows_), cols_(other.cols_), matrix_(other.matrix_) {
+        Matrix(Matrix &&other) noexcept: rows_(other.rows_), cols_(other.cols_), matrix_(other.matrix_) {
             other.rows_ = 0;
             other.cols_ = 0;
             other.matrix_ = nullptr;
         }
-        MLPMatrix &operator=(const MLPMatrix &other){
+        Matrix &operator=(const Matrix &other){
             if (this == &other) return *this;
-            MLPMatrix tmp(other);
+            Matrix tmp(other);
             *this = std::move(tmp);
             return *this;
         }
-        MLPMatrix &operator=(MLPMatrix &&other) noexcept{
+        Matrix &operator=(Matrix &&other) noexcept{
             if(&other == this) return *this;
             if(matrix_) delete[] matrix_[0];
             delete[] matrix_;
@@ -60,78 +74,90 @@ namespace s21 {
             other.matrix_ = nullptr;
             return *this;
         }
-        MLPMatrix& operator=(const std::vector<double>& other){
-            MLPMatrix tmp(other);
+        /**
+         * @brief Constructs vector-like matrix(1 by x where x is iterable object size)\n
+         * and moves it into *this;
+         * Object must be iterable, have .size() method\n
+         * and have iterator dereference value implicitly convertable to double\n
+         */
+        template<typename Iterable,
+                typename = std::enable_if_t<std::is_convertible<decltype(*std::begin(std::declval<Iterable>())), double>::value>>
+        Matrix& operator=(const Iterable& other){
+            Matrix tmp(other);
             *this = std::move(tmp);
             return *this;
         }
-        ~MLPMatrix(){
+        ~Matrix(){
             if(matrix_) delete[] matrix_[0];
             delete[] matrix_;
         }
 
-
-        MLPMatrix operator+(const MLPMatrix &other) const{
-            MLPMatrix res(rows_, cols_);
+        template<typename Iterable,
+                typename = std::enable_if_t<std::is_convertible<decltype(*std::begin(std::declval<Iterable>())), double>::value>>
+        Matrix operator+(const Iterable &other) const{
+            Matrix res(rows_, cols_);
             std::transform(begin(), end(), other.begin(), res.begin(), std::plus<>());
             return res;
         }
-        MLPMatrix &operator+=(const MLPMatrix &other){
+        template<typename Iterable,
+                typename = std::enable_if_t<std::is_convertible<decltype(*std::begin(std::declval<Iterable>())), double>::value>>
+        Matrix &operator+=(const Iterable &other){
             std::transform(begin(), end(), other.begin(), begin(), std::plus<>());
             return *this;
         }
 
 
-        template<typename Iterable>
-        MLPMatrix operator-(const Iterable &other) const{
-            MLPMatrix res(rows_, cols_);
+        template<typename Iterable,
+                typename = std::enable_if_t<std::is_convertible<decltype(*std::begin(std::declval<Iterable>())), double>::value>>
+        Matrix operator-(const Iterable &other) const{
+            Matrix res(rows_, cols_);
             std::transform(begin(), end(), other.begin(), res.begin(), std::minus<>());
             return res;
         }
-//        MLPMatrix operator-(const std::vector<double>& other) const{
-//            MLPMatrix res(rows_, cols_);
-//            std::transform(begin(), end(), other.begin(), res.begin(), std::minus<>());
-//            return res;
-//        }
-        MLPMatrix &operator-=(const MLPMatrix &other){
+        template<typename Iterable,
+                typename = std::enable_if_t<std::is_convertible<decltype(*std::begin(std::declval<Iterable>())), double>::value>>
+        Matrix &operator-=(const Iterable &other){
             std::transform(begin(), end(), other.begin(), begin(), std::minus<>());
             return *this;
         }
 
-
-        MLPMatrix operator&(const MLPMatrix& other) const{
-            MLPMatrix res(rows_, cols_);
+        template<typename Iterable,
+                typename = std::enable_if_t<std::is_convertible<decltype(*std::begin(std::declval<Iterable>())), double>::value>>
+        Matrix operator&(const Iterable& other) const{
+            Matrix res(rows_, cols_);
             std::transform(begin(), end(), other.begin(), res.begin(), std::multiplies<>());
             return res;
         }
-        MLPMatrix &operator&=(const MLPMatrix& other) {
+        template<typename Iterable,
+                typename = std::enable_if_t<std::is_convertible<decltype(*std::begin(std::declval<Iterable>())), double>::value>>
+        Matrix &operator&=(const Iterable& other) {
             std::transform(begin(), end(), other.begin(), begin(), std::multiplies<>());
             return *this;
         }
 
 
-        MLPMatrix operator*(const MLPMatrix &other) const{
-            MLPMatrix res(rows_, other.cols_);
+        Matrix operator*(const Matrix &other) const{
+            Matrix res(rows_, other.cols_);
             for (size_t i = 0; i < rows_; i++)
                 for (size_t j = 0; j < other.cols_; j++)
                     for (size_t k = 0; k < other.rows_; k++)
                         res.matrix_[i][j] += matrix_[i][k] * other.matrix_[k][j];
             return res;
         }
-        MLPMatrix &operator*=(const MLPMatrix &other){
+        Matrix &operator*=(const Matrix &other){
             *this = (*this * other);
             return *this;
         }
-        MLPMatrix MulByTransposed(const MLPMatrix& other) const{
-            MLPMatrix res(rows_, other.rows_);
+        Matrix MulByTransposed(const Matrix& other) const{
+            Matrix res(rows_, other.rows_);
             for (size_t i = 0; i < rows_; i++)
                 for (size_t j = 0; j < other.rows_; j++)
                     for (size_t k = 0; k < cols_; k++)
                         res.matrix_[i][j] += matrix_[i][k] * other.matrix_[j][k];
             return res;
         }
-        MLPMatrix MulSelfTranspose(const MLPMatrix &other) const{
-            MLPMatrix res(cols_, other.cols_);
+        Matrix MulSelfTranspose(const Matrix &other) const{
+            Matrix res(cols_, other.cols_);
             for (size_t i = 0; i < cols_; i++)
                 for (size_t j = 0; j < other.cols_; j++)
                     for (size_t k = 0; k < rows_; k++)
@@ -139,51 +165,51 @@ namespace s21 {
             return res;
         }
 
-        MLPMatrix operator*(const double num) const{
-            MLPMatrix res(rows_, cols_);
+        Matrix operator*(const double num) const{
+            Matrix res(rows_, cols_);
             auto it = res.begin();
             for(const auto &v: *this)
                 *it++ = v * num;
             return res;
         }
-        friend MLPMatrix operator*(const double num, const MLPMatrix &other){
+        friend Matrix operator*(const double num, const Matrix &other){
             return other * num;
         }
-        MLPMatrix &operator*=(const double num) noexcept {
+        Matrix &operator*=(const double num) noexcept {
             for(auto &v: *this)
                 v *= num;
             return *this;
         }
 
 
-        MLPMatrix operator/(const double num) const{
-            MLPMatrix res(rows_, cols_);
+        Matrix operator/(const double num) const{
+            Matrix res(rows_, cols_);
             auto it = res.begin();
             for(const auto &v: *this)
                 *it++ = v / num;
             return res;
         }
-        friend MLPMatrix operator/(const double num, const MLPMatrix &other){
-            MLPMatrix res(other.rows_, other.cols_);
+        friend Matrix operator/(const double num, const Matrix &other){
+            Matrix res(other.rows_, other.cols_);
             auto it = res.begin();
             for(const auto &v: other)
                 *it++ = num / v;
             return res;
         }
-        MLPMatrix &operator/=(const double num) noexcept{
+        Matrix &operator/=(const double num) noexcept{
             for(auto&v : *this)
                 v /= num;
             return *this;
         }
 
 
-        MLPMatrix Exp() const { return Transform(std::exp); }
+        Matrix Exp() const { return Transform(std::exp); }
         double Sum() const noexcept{ return std::accumulate(begin(), end(), 0.0); }
-        MLPMatrix Abs() const { return Transform(std::fabs); }
+        Matrix Abs() const { return Transform(std::fabs); }
 
 
-        MLPMatrix Transform(double(*foo)(double)) const{
-            MLPMatrix res(rows_, cols_);
+        Matrix Transform(double(*foo)(double)) const{
+            Matrix res(rows_, cols_);
             std::transform(begin(), end(), res.begin(), foo);
             return res;
         }
@@ -206,14 +232,14 @@ namespace s21 {
         const double &operator()(const size_t i, const size_t j) const noexcept {return matrix_[i][j];}
 
 
-        friend std::ostream &operator<<(std::ostream &out, const MLPMatrix &other){
+        friend std::ostream &operator<<(std::ostream &out, const Matrix &other){
             for (size_t i = 0; i < other.Rows(); i++) {
                 for (size_t j = 0; j < other.Cols(); j++) out << other(i, j) << " ";
                 out << std::endl;
             }
             return out;
         }
-        friend std::istream &operator>>(std::istream &in, MLPMatrix &other){
+        friend std::istream &operator>>(std::istream &in, Matrix &other){
             for(auto& v : other) in >> v;
             return in;
         }
@@ -223,4 +249,4 @@ namespace s21 {
         double **matrix_;
     };
 }  // namespace S21
-#endif //MULTILAYERABOBATRON_UTILS_MLPMATRIX_H_
+#endif //MULTILAYERABOBATRON_UTILS_MATRIX_H_

@@ -3,10 +3,11 @@
 
 namespace s21{
 
-    std::vector<std::pair<vec, vec>> DataLoader::CreateSample(size_t batch_size, size_t start_from, Mode mode, bool shuffle){
+    std::vector<std::pair<std::vector<double>, std::vector<double>>> DataLoader::CreateSample
+    (size_t batch_size, size_t start_from, Mode mode, bool shuffle){
 
         auto & data = mode == kTrain ? data_ : test_data_;
-        std::vector<std::pair<vec, vec>> sample;
+        std::vector<std::pair<std::vector<double>, std::vector<double>>> sample;
         size_t finish = start_from + batch_size;
 
         for(size_t i = start_from; i < finish; ++i)
@@ -35,10 +36,10 @@ void DataLoader::FileToData(const char * filepath, Mode mode, bool shuffle)
     while(std::getline(file, str)){
        std::istringstream strstream(str);
        strstream >> index >> trash_comma;
-       vec ideal(out_, 0);
+        std::vector<double> ideal(out_, 0);
 //       Mx ideal(1, out_);
        ideal[--index] = 1.0;
-       data.emplace_back(ideal, vec(in_));
+       data.emplace_back(ideal, std::vector<double>(in_, 0));
 
         for(size_t i = 0; i < in_; ++i) {
             strstream >> data.back().second[i] >> trash_comma;
