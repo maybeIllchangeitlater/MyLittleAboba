@@ -1,5 +1,5 @@
 #include <iostream>
-#include "TrainingGround.h"
+#include "Model/TrainingGround.h"
 
 int main() {
     ///some vals that work (784, 128, 128, 26)
@@ -12,15 +12,21 @@ int main() {
     d.FileToData("/Users/monke/Biba/emnist-letters/emnist-letters-train.csv", s21::DataLoader::kTrain);
     d.FileToData("/Users/monke/Biba/emnist-letters/emnist-letters-test.csv", s21::DataLoader::kTest);
 //    s21::MLP m(std::vector<size_t>{784, 128, 128, 26}, &d, "ReLU");
+//        s21::MLP m(&d);
+//    std::fstream file_log("/Users/monke/MyLittleAboba/saved configs/elu_784_128_128_26_correctly_passed_12538tests.txt", std::ios_base::in);
+//    file_log >> m;
+//    m.Test();
+//    std::cout << m.CorrectAnswers();
+
 //    m.GradientDescent(0.03, 3, SIZE_T_MAX, 0.01, 1);
 //    for(const auto& v: m.GetAccuracy())
 //        std::cout << v << " ";
     s21::TrainingConfig tc;
     tc.perceptron_counter = 6;
-//    tc.save = false;
+    tc.save = false;
     tc.topologies.push_back(std::vector<size_t>{784, 128, 128, 26});
-    tc.epochs.emplace_back(5);
-//    tc.activation_functions.emplace_back("ELU");
+    tc.epochs.emplace_back(3);
+    tc.activation_functions.emplace_back("ReLU");
     tc.learning_rates.emplace_back(0.015);
     tc.learning_rates.emplace_back(0.03);
     tc.learning_rates.emplace_back(0.02);
@@ -41,7 +47,7 @@ int main() {
 //    tc.learning_rate_reduction_frequencies.emplace_back(0);
 
 //    tc.load = true;
-    tc.path_to_perceptrons.emplace_back("/Users/monke/MultilayerAbobatron/elu_784_128_128_26_correctly_passed_11462tests.txt");
+//    tc.path_to_perceptrons.emplace_back("/Users/monke/MultilayerAbobatron/elu_784_128_128_26_correctly_passed_11462tests.txt");
 //    }
     s21::TrainingGround tg(tc, d);
     tg.Train();
