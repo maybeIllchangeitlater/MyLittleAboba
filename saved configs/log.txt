@@ -1,0 +1,50 @@
+MLP number 0 of matrix model type with activation function sigmoid and topology of: 784 128 128 26 
+Performance over 5 epochs:
+	epoch: 0	learning rate: 0.03	    average error: 0.0580834
+	epoch: 1	learning rate: 0.027	average error: 0.0267348
+	epoch: 2	learning rate: 0.024	average error: 0.0205685
+	epoch: 3	learning rate: 0.021	average error: 0.0177852
+	epoch: 4	learning rate: 0.018	average error: 0.0160548
+
+MLP number 0 correctly guessed 12150 out of 14800
+
+MLP number 1 of matrix model type with activation function tanh and topology of: 784 128 128 26 
+Performance over 5 epochs:
+	epoch: 0	learning rate: 0.016	average error: 0.0342609
+	epoch: 1	learning rate: 0.013	average error: 0.0242286
+	epoch: 2	learning rate: 0.01	    average error: 0.0212992
+	epoch: 3	learning rate: 0.007	average error: 0.018403
+	epoch: 4	learning rate: 0.004	average error: 0.0160736
+
+MLP number 1 correctly guessed 12113 out of 14800
+
+MLP number 2 of matrix model type with activation function ELU and topology of: 784 128 128 26 
+Performance over 5 epochs:
+	epoch: 0	learning rate: 0.016	average error: 0.0350289
+	epoch: 1	learning rate: 0.013	average error: 0.021707
+	epoch: 2	learning rate: 0.01	    average error: 0.0175668
+	epoch: 3	learning rate: 0.007	average error: 0.0143416
+	epoch: 4	learning rate: 0.004	average error: 0.0117903
+
+MLP number 2 correctly guessed 12566 out of 14800
+
+MLP number 3 of matrix model type with activation function ReLU and topology of: 784 128 128 26 
+Performance over 5 epochs:
+	epoch: 0	learning rate: 0.016	average error: 0.0364424
+	epoch: 1	learning rate: 0.013	average error: 0.0224416
+	epoch: 2	learning rate: 0.01	    average error: 0.0179282
+	epoch: 3	learning rate: 0.007	average error: 0.01467
+	epoch: 4	learning rate: 0.004	average error: 0.0120633
+
+MLP number 3 correctly guessed 12547 out of 14800
+
+MLP number 4 of matrix model type with activation function leakyReLU and topology of: 784 128 128 26 
+Performance over 5 epochs:
+	epoch: 0	learning rate: 0.016	average error: 0.0361791
+	epoch: 1	learning rate: 0.013	average error: 0.0224461
+	epoch: 2	learning rate: 0.01	    average error: 0.0181489
+	epoch: 3	learning rate: 0.007	average error: 0.0148309
+	epoch: 4	learning rate: 0.004	average error: 0.0121667
+
+MLP number 4 correctly guessed 12476 out of 14800
+

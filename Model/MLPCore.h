@@ -20,7 +20,7 @@ namespace s21{
          * @param lr_reduction reduce lr by. defaulted to 0.0
          * @param reduction_frequency per how many epochs to reduce lr. defaulted to 0 (never)
          */
-        virtual void GradientDescent(double lr = 0.1, size_t epochs = 5, size_t batch_size = SIZE_T_MAX,
+        virtual void GradientDescent(double lr = 0.03, size_t epochs = 5, size_t batch_size = SIZE_T_MAX,
                                      double lr_reduction = 0.0, size_t reduction_frequency = 0) = 0;
         /**
          * @brief parse input and guess a label
@@ -36,7 +36,7 @@ namespace s21{
          */
         virtual std::vector<size_t> Topology() = 0;
 
-        const std::string& ActivationFunctionName() { return activation_function_name_; }
+        const std::string& ActivationFunctionName() const noexcept { return activation_function_name_; }
         /**
          * @return how many tests did MatrixMLP pass last test run
          */

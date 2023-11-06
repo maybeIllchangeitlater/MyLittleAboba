@@ -87,7 +87,7 @@ namespace s21{
             average_error_.push_back(error/batch_size);
             error = 0.0;
 
-            if (reduction_frequency && !(e + 1 % reduction_frequency)) {
+            if (reduction_frequency && !((e + 1) % reduction_frequency)) {
                 lr_ -= lr_reduction;
             }
         }
@@ -109,59 +109,6 @@ namespace s21{
         FeedForward(in);
         return GetAnswer();
     }
-
-//    std::ostream &operator<<(std::ostream &out, const MatrixMLP &other){
-//
-//        out << other.activation_function_name_ << " ";
-//        out << other.layers_.size() << " ";
-//
-//        for(const auto & l : other.layers_) {
-//            out << l.activated_outputs_.Cols() << " "; //save topology
-//        }
-//
-//        for(const auto& layer : other.layers_){
-//            out << layer.weights_;
-//            out << layer.biases_;
-//        }
-//
-//        return out;
-//
-//    }
-
-
-//    std::istream &operator>>(std::istream &in, MatrixMLP &other){
-//
-//        in >> other.activation_function_name_;
-//        other.GetActivationFunction();
-//
-//        std::vector<size_t> topology;
-//        size_t t_size;
-//        in >>  t_size;
-//
-//        for(size_t i = 0; i < t_size; ++i) {
-//            size_t tmp;
-//            in >> tmp;
-//            topology.push_back(tmp);
-//        }
-//
-//        if(topology.front() != other.dl_->Inputs() || topology.back() != other.dl_->Outputs())
-//            throw std::logic_error("MatrixMLP operator>>:"
-//                                   "Inputs and outputs of preceptron must correspond to ins and outs of "
-//                                   "dataloader");
-//
-//        for(size_t i = 0; i < topology.size() - 1; ++i){
-//            Mx w(topology[i], topology[i + 1]);
-//            Mx b(1, topology[i + 1]);
-//            in >> w;
-//            in >> b;
-//            other.layers_.emplace_back(std::move(w), std::move(b));
-//        }
-//
-//        other.layers_.emplace_back();
-//
-//        return in;
-//
-//    }
 
 
     void MatrixMLP::GetActivationFunction() {

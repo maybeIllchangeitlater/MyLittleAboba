@@ -3,13 +3,13 @@
 namespace s21{
     TrainingGround::TrainingGround(TrainingConfig& schel, DataLoader& d) : schedule_(schel), dl_(d){
         EnsureConfiguration();
-        schedule_.load && !schedule_.path_to_perceptrons.empty() ? LoadPerceptrons() : CreatePerceptrons();
+        schedule_.load && !schedule_.load_path.empty() ? LoadPerceptrons() : CreatePerceptrons();
     }
 
 
     TrainingGround::~TrainingGround() {
-        for(auto& a: abobas_)
-            delete a;
+        for(auto aboba: abobas_)
+            delete aboba;
     }
 
 
@@ -23,18 +23,22 @@ namespace s21{
         TestPerceptrons(they_learn);
         they_learn.clear();
 
-        FindAccuracy();
+        if(!schedule_.save_path.empty() && (schedule_.save || schedule_.log)) {
+            FixSaveLocation();
 
-        size_t best = FindTheBestOne();
-        if(schedule_.save && !schedule_.winner_savepath.empty())
-            SaveTheBestOne(best);
+            if(schedule_.save)
+                SaveTheBestOne();
+
+            if(schedule_.log)
+                SaveLog();
+        }
 
     }
 
 
     void TrainingGround::LoadPerceptrons() {
 
-        for (const auto &s: schedule_.path_to_perceptrons) {
+        for (const auto &s: schedule_.load_path) {
             std::fstream file(s, std::ios_base::in);
             if (file) {
                 size_t model_t;
@@ -51,7 +55,7 @@ namespace s21{
             }
         }
 
-        for (size_t p = schedule_.path_to_perceptrons.size(); p < schedule_.perceptron_counter; ++p)
+        for (size_t p = schedule_.load_path.size(); p < schedule_.perceptron_counter; ++p)
             abobas_.emplace_back(abobas_.back());
 
     }
@@ -59,27 +63,16 @@ namespace s21{
 
     void TrainingGround::CreatePerceptrons() {
 
-
         for (size_t i = 0; i < schedule_.perceptron_counter; ++i) {
 
-            auto & topology = i < schedule_.topologies.size()
-                    ? schedule_.topologies[i]
-                    : schedule_.topologies.back();
-
-            if (dl_.Inputs() != topology.front() || dl_.Outputs() != topology.back()) {
+            if (dl_.Inputs() != schedule_.topologies[i].front() || dl_.Outputs() != schedule_.topologies[i].back()) {
                 throw std::logic_error("TrainingGround Constructor:"
                                        "Inputs and outputs of perceptron must correspond to ins and outs of "
                                        "dataloader");
             }
 
-            auto& activation = i < schedule_.activation_functions.size()
-                                        ? schedule_.activation_functions[i]
-                                        : schedule_.activation_functions.back();
-            auto& model_type = i < schedule_.mlp_types.size()
-                                       ? schedule_.mlp_types[i]
-                                       : schedule_.mlp_types.back();
-
-            abobas_.emplace_back(ConstructModel(model_type, topology, &dl_, activation));
+            abobas_.emplace_back(ConstructModel(schedule_.mlp_types[i],
+                                                schedule_.topologies[i], &dl_, schedule_.activation_functions[i]));
 
         }
 
@@ -108,6 +101,30 @@ namespace s21{
         if(schedule_.batch_sizes.empty())
             schedule_.batch_sizes.emplace_back(TrainingConfig::kDefaultBatchSize);
 
+        FillMissingConfigurations();
+
+    }
+
+
+    void TrainingGround::FillMissingConfigurations(){
+
+        while (schedule_.topologies.size() < schedule_.perceptron_counter)
+            schedule_.topologies.emplace_back(schedule_.topologies.back());
+        while (schedule_.mlp_types.size() < schedule_.perceptron_counter)
+            schedule_.mlp_types.emplace_back(schedule_.mlp_types.back());
+        while (schedule_.epochs.size() < schedule_.perceptron_counter)
+            schedule_.epochs.emplace_back(schedule_.epochs.back());
+        while (schedule_.activation_functions.size() < schedule_.perceptron_counter)
+            schedule_.activation_functions.emplace_back(schedule_.activation_functions.back());
+        while (schedule_.learning_rates.size() < schedule_.perceptron_counter)
+            schedule_.learning_rates.emplace_back(schedule_.learning_rates.back());
+        while (schedule_.learning_rate_reductions.size() < schedule_.perceptron_counter)
+            schedule_.learning_rate_reductions.emplace_back(schedule_.learning_rate_reductions.back());
+        while (schedule_.learning_rate_reduction_frequencies.size() < schedule_.perceptron_counter)
+            schedule_.learning_rate_reduction_frequencies.emplace_back(schedule_.learning_rate_reduction_frequencies.back());
+        while (schedule_.batch_sizes.size() < schedule_.perceptron_counter)
+            schedule_.batch_sizes.emplace_back(schedule_.batch_sizes.back());
+
     }
 
 
@@ -115,22 +132,13 @@ namespace s21{
 
         size_t counter = 0;
 
-        for(auto & aboba : abobas_){ //alternatively [std::min(size -1, counter)], its a mess either ways
-            size_t epochs = counter < schedule_.epochs.size()
-                    ? schedule_.epochs[counter]
-                    : schedule_.epochs.back();
-            size_t batch_size = counter < schedule_.batch_sizes.size()
-                                ? schedule_.batch_sizes[counter]
-                                : schedule_.batch_sizes.back();
-            double learning_rate = counter < schedule_.learning_rates.size()
-                                   ? schedule_.learning_rates[counter]
-                                   : schedule_.learning_rates.back();
-            double learning_rate_reduction = counter < schedule_.learning_rate_reductions.size()
-                                            ? schedule_.learning_rate_reductions[counter]
-                                            : schedule_.learning_rate_reductions.back();
-            size_t reduction_frequency = counter < schedule_.learning_rate_reduction_frequencies.size()
-                                         ? schedule_.learning_rate_reduction_frequencies[counter]
-                                         : schedule_.learning_rate_reduction_frequencies.back();
+        for(auto & aboba : abobas_){
+
+            size_t epochs = schedule_.epochs[counter];
+            size_t batch_size = schedule_.batch_sizes[counter];
+            double learning_rate = schedule_.learning_rates[counter];
+            double learning_rate_reduction = schedule_.learning_rate_reductions[counter];
+            size_t reduction_frequency = schedule_.learning_rate_reduction_frequencies[counter];
             ++counter;
 
             auto functor = [&aboba, epochs, batch_size, learning_rate,
@@ -173,56 +181,72 @@ namespace s21{
         return best_ind;
     }
 
-    void TrainingGround::SaveTheBestOne(size_t best){
+    void TrainingGround::SaveTheBestOne(){
 
-        size_t fix_default = schedule_.winner_savepath.find("TrainingGround.h");
-        if(fix_default != std::string::npos)
-            schedule_.winner_savepath.erase(fix_default);
+        size_t best = FindTheBestOne();
 
-        schedule_.winner_savepath += abobas_[best]->ActivationFunctionName() + "_";
+        std::string save_to(schedule_.save_path + abobas_[best]->ActivationFunctionName() + "_");
 
         for(const auto & t : abobas_[best]->Topology())
-            schedule_.winner_savepath += std::to_string(t) + "_";
+            save_to += std::to_string(t) + "_";
 
-        schedule_.winner_savepath += "correctly_passed_" + std::to_string(abobas_[best]->CorrectAnswers());
+        save_to += "correctly_passed_" + std::to_string(abobas_[best]->CorrectAnswers()) + "tests.txt";
 
-        if(schedule_.log)
-            SaveLog(best);
-
-        schedule_.winner_savepath += "tests.txt" ;
-
-        std::fstream file(schedule_.winner_savepath, std::ios_base::out);
-
+        std::fstream file(save_to, std::ios_base::out);
 
         if(!file)
             throw std::logic_error("TraningGround: Save: specified path doesn't exist");
 
-        file << abobas_[best];
+        file << *abobas_[best];
         file.close();
 
     }
 
-    void TrainingGround::SaveLog(size_t best){
+    void TrainingGround::SaveLog(){
 
-        std::string save_log(schedule_.winner_savepath + "log.txt");
-        std::fstream file_log(save_log, std::ios_base::out);
+        std::string save_to(schedule_.save_path + "log.txt");
+        std::fstream file(save_to, std::ios_base::out);
 
-        if(!file_log)
+        if(!file)
             throw std::logic_error("TraningGround: Save log: specified path doesn't exist");
 
-        for(const auto& a : abobas_[best]->GetAccuracy())
-            file_log << a << " ";
+        for(size_t p = 0 ; p < schedule_.perceptron_counter; ++p){
 
-    }
+            std::string model = schedule_.mlp_types[p] == MLPCore::MLPType::kMatrix ? "matrix" : "graph";
 
+            file << "MLP number " << p << " of " << model << " model type with activation function "
+            << schedule_.activation_functions[p] <<   " and topology of: ";
 
-    void TrainingGround::FindAccuracy(){
-        for(const auto& aboba : abobas_){
-            accuracy.emplace_back();
-            for(const auto& a : aboba->GetAccuracy())
-                accuracy.back().emplace_back(a);
+            for(const auto& t : abobas_[p]->Topology())
+                file << t << " ";
+            file << std::endl << "Performance over " <<
+            schedule_.epochs[p] << " epochs:" << std::endl;
+
+            double c_lr = schedule_.learning_rates[p];
+
+            for(size_t e = 0; e < schedule_.epochs[p]; ++e){
+
+                file << "\tepoch: " << e << "\tlearning rate: " << c_lr << "\taverage error: " <<
+                abobas_[p]->GetAccuracy()[e] << std::endl;
+
+                if(schedule_.learning_rate_reduction_frequencies[p]
+                && !((e + 1) % schedule_.learning_rate_reduction_frequencies[p]))
+                    c_lr -= schedule_.learning_rate_reductions[p];
+
+            }
+            file << std::endl << "MLP number " << p << " correctly guessed " << correctness_counter[p]
+            << " out of " << dl_.MaximumTestsTests() << std::endl << std::endl;
+
         }
+
     }
+
+    void TrainingGround::FixSaveLocation(){
+        size_t fix_default = schedule_.save_path.find("TrainingGround.h");
+        if(fix_default != std::string::npos)
+            schedule_.save_path.erase(fix_default);
+    }
+
 
 
 }
