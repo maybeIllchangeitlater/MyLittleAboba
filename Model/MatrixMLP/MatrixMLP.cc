@@ -72,11 +72,10 @@ namespace s21{
 
         lr_ = lr;
         double error = 0.0;
-        batch_size = std::min(batch_size, dl_->MaximumTests());
-        std::uniform_int_distribution<size_t> dist(0, dl_->MaximumTests() - batch_size);
 
         for (size_t e = 0; e < epochs; ++e) {
-            auto batch = dl_->CreateSample(batch_size, dist(gen_), DataLoader::kTrain, true);
+            auto batch = dl_->CreateSample(batch_size);
+            batch_size = batch.size();
 
             for (size_t b = 0; b < batch_size; ++b) {
                 FeedForward(batch[b].second);

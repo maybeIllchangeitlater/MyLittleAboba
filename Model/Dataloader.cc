@@ -10,8 +10,8 @@ DataLoader::CreateSample(size_t batch_size) {
     size_t extra = 0;
 
     for(auto&[label, data] : data_){
-        size_t b = std::min(batch + extra, data.size());
 
+        auto b = std::min(batch + extra, data.size());
         if(batch > data.size())
             extra +=  batch - data_.size();
         else if(batch < data.size())
@@ -19,17 +19,18 @@ DataLoader::CreateSample(size_t batch_size) {
 
         mtx_.lock();
         std::shuffle(data.begin(), data.end(), gen_);
-        mtx_.unlock();
         for(size_t i = 0; i < b; ++i){
             std::vector<double> ideal(out_, 0);
             ideal[label] = 1;
             std::vector<double> input(data[i]);
             sample.emplace_back(std::move(ideal), std::move(input));
         }
+
+        mtx_.unlock();
     }
+    std::shuffle(sample.begin(), sample.end(), gen_);
 
-
-  return sample;
+    return sample;
 }
 
 void DataLoader::FileToData(const char *filepath, Mode mode) {
