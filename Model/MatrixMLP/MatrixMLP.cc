@@ -79,11 +79,13 @@ namespace s21{
 
             for (size_t b = 0; b < batch_size; ++b) {
                 FeedForward(batch[b].second);
-                BackPropogation(batch[b].first);
-                error += GetError(batch[b].first);
+                std::vector<double> ideal(dl_->Outputs(), 0);
+                ideal[batch[b].first] = 1;
+                BackPropogation(ideal);
+                error += GetError(ideal);
             }
 
-            average_error_.push_back(error/batch_size);
+            error_.push_back(error/batch_size);
             error = 0.0;
 
             if (reduction_frequency && !((e + 1) % reduction_frequency)) {
@@ -93,15 +95,40 @@ namespace s21{
 
     }
 
-    size_t MatrixMLP::Test() {
+    void MatrixMLP::Test(size_t batch_size) {
+        accuracy_ = 0;
+        auto test_set = dl_->CreateSample(batch_size, DataLoader::kTest);
+        accuracy_ = 0;
+        precision_.clear();
+        recall_.clear();
+        f1_score_.clear();
+        std::vector<double> true_positives(dl_->Outputs(), 0);
+        std::vector<double> false_positives(dl_->Outputs(), 0);
+        std::vector<double> false_negatives(dl_->Outputs(), 0);
+        size_t predicted_label;
+        bool correct;
 
-        auto & test_set = dl_->TestData();
-        correct_test_answers_ = 0;
+        for(const auto& [label, data] : test_set) {
+                predicted_label = Predict(data);
+                correct = (predicted_label == label);
+                if(correct){
+                    ++accuracy_;
+                    ++true_positives[label];
+                }else{
+                    ++false_positives[predicted_label];
+                    ++false_negatives[label];
+                }
 
-        for(const auto& input : test_set)
-            correct_test_answers_ += Debug(input);
+        }
 
-        return correct_test_answers_;
+        accuracy_ /= test_set.size();
+
+        for(size_t i = 0; i < dl_->Outputs(); ++i){
+            precision_.emplace_back(true_positives[i]/(true_positives[i] + false_positives[i]));
+            recall_.emplace_back(true_positives[i]/(true_positives[i] + false_negatives[i]));
+            f1_score_.emplace_back(2 * precision_[i] * recall_[i] / precision_[i] + recall_[i]);
+        }
+
     }
 
     size_t MatrixMLP::Predict(const std::vector<double> &in) {
@@ -184,11 +211,6 @@ namespace s21{
     double MatrixMLP::GetError(const std::vector<double>& ideal){
         return (layers_.back().activated_outputs_ - ideal).Abs().Sum()
                /static_cast<double>(layers_.back().activated_outputs_.Size());
-    }
-
-    bool MatrixMLP::Debug(const std::pair<std::vector<double>, std::vector<double>>& in){
-        FeedForward(in.second);
-        return WasRight(in.first);
     }
 
 

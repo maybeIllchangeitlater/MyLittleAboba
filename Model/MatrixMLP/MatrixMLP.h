@@ -28,10 +28,10 @@ namespace s21 {
                              double lr_reduction, size_t reduction_frequency) override;
 
         /**
-         * @brief run the tests
-         * @return amount of correct guesses
+         * @brief run the batch_size amount of tests and find model's precision, accuracy,\n
+         * recall and F1
          */
-        size_t Test() override;
+        void Test(size_t batch_size) override;
         /**
          * @brief parse input and guess a label
          */

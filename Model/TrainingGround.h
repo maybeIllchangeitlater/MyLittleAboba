@@ -29,6 +29,7 @@ namespace s21{
          * @param learning_rate_reductions By how much to reduce learning rate
          * @param learning_rate_reduction_frequencies Once per how many epoch to apply\n Defaulted to 0 (never)
          * @param batch_sizes Defaulted to full training dataset
+         * @param test_batch_sizes Defaulted to full testing dataset
          */
     struct TrainingConfig {
 
@@ -45,6 +46,7 @@ namespace s21{
         bool log = true;
         bool save = true;
         size_t perceptron_counter;
+        size_t test_batch_size = SIZE_T_MAX;
         std::string save_path = __FILE__;
         std::vector<const char *> load_path;
         std::vector<MLPType> mlp_types;
@@ -70,10 +72,23 @@ namespace s21{
          * @brief launch MLP training with preloaded config\n
          */
         void Train();
-        ///how many correct answers did each perceptron get after testing
-        std::vector<size_t> correctness_counter;
-        ///accuracy over training for each perceptron. actually, error rate. lower is better
-        std::vector<std::vector<double>> accuracy;
+        /**
+         * @brief Test MLPs\n
+         */
+        void Test();
+        /**
+         * @brief Save your favorite aboba, even if he isn't the best
+         */
+        void Save(const size_t MLPindex);
+        void SetSavePath(const char * filepath);
+        void SetTestBatchSize(const size_t size);
+        void SetTrainBatchSize(const size_t MLPindex, const size_t size);
+        void SetLearningRate(const size_t MLPindex, const double lr);
+        void SetLearningRateReduction(const size_t MLPindex, const double reduction);
+        void SetLearningRateReductionFrequency(const size_t MLPindex, const size_t frequency);
+        void SetEpochs(const size_t MLPindex, const size_t epochs);
+        void SetSave(bool state);
+        void SetSaveLog(bool state);
     private:
         void LoadPerceptrons();
         void CreatePerceptrons();
@@ -104,11 +119,9 @@ namespace s21{
          * @brief fill unspecified configuration values with last input(or default) values
          */
         void FillMissingConfigurations();
-        void TrainPerceptrons(std::vector<std::thread>& they_learn);
-        void TestPerceptrons(std::vector<std::thread>& they_learn);
+        void TrainPerceptrons();
         size_t FindTheBestOne();
         void FixSaveLocation();
-        void SaveTheBestOne();
         void SaveLog();
 
 

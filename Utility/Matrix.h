@@ -12,9 +12,7 @@ namespace s21 {
     public:
 
         Matrix() noexcept: rows_(0), cols_(0), matrix_(nullptr){}
-        /**
-         * @brief constructs rows by cols 0 filled matrix
-         */
+
         explicit Matrix(const size_t rows, const size_t cols)  : rows_(rows), cols_(cols) {
             if(rows_ && cols_) {
                 matrix_ = new double *[rows_];
@@ -44,8 +42,7 @@ namespace s21 {
          * Object must be iterable, have .size() method\n
          * and have iterator dereference value implicitly convertable to double\n
          */
-        template<typename Iterable,
-                typename = std::enable_if_t<std::is_convertible<decltype(*std::begin(std::declval<Iterable>())), double>::value>>
+        template<typename Iterable>
         Matrix(const Iterable& other)
         : Matrix(1, other.size()) {
             std::copy(other.begin(), other.end(), begin());
@@ -74,14 +71,7 @@ namespace s21 {
             other.matrix_ = nullptr;
             return *this;
         }
-        /**
-         * @brief Constructs vector-like matrix(1 by x where x is iterable object size)\n
-         * and moves it into *this;
-         * Object must be iterable, have .size() method\n
-         * and have iterator dereference value implicitly convertable to double\n
-         */
-        template<typename Iterable,
-                typename = std::enable_if_t<std::is_convertible<decltype(*std::begin(std::declval<Iterable>())), double>::value>>
+        template<typename Iterable>
         Matrix& operator=(const Iterable& other){
             Matrix tmp(other);
             *this = std::move(tmp);
@@ -92,44 +82,39 @@ namespace s21 {
             delete[] matrix_;
         }
 
-        template<typename Iterable,
-                typename = std::enable_if_t<std::is_convertible<decltype(*std::begin(std::declval<Iterable>())), double>::value>>
+        template<typename Iterable>
         Matrix operator+(const Iterable &other) const{
             Matrix res(rows_, cols_);
             std::transform(begin(), end(), other.begin(), res.begin(), std::plus<>());
             return res;
         }
-        template<typename Iterable,
-                typename = std::enable_if_t<std::is_convertible<decltype(*std::begin(std::declval<Iterable>())), double>::value>>
+        template<typename Iterable>
         Matrix &operator+=(const Iterable &other){
             std::transform(begin(), end(), other.begin(), begin(), std::plus<>());
             return *this;
         }
 
 
-        template<typename Iterable,
-                typename = std::enable_if_t<std::is_convertible<decltype(*std::begin(std::declval<Iterable>())), double>::value>>
+        template<typename Iterable>
         Matrix operator-(const Iterable &other) const{
             Matrix res(rows_, cols_);
             std::transform(begin(), end(), other.begin(), res.begin(), std::minus<>());
             return res;
         }
-        template<typename Iterable,
-                typename = std::enable_if_t<std::is_convertible<decltype(*std::begin(std::declval<Iterable>())), double>::value>>
+        template<typename Iterable>
         Matrix &operator-=(const Iterable &other){
             std::transform(begin(), end(), other.begin(), begin(), std::minus<>());
             return *this;
         }
 
-        template<typename Iterable,
-                typename = std::enable_if_t<std::is_convertible<decltype(*std::begin(std::declval<Iterable>())), double>::value>>
+        ///hadamard product
+        template<typename Iterable>
         Matrix operator&(const Iterable& other) const{
             Matrix res(rows_, cols_);
             std::transform(begin(), end(), other.begin(), res.begin(), std::multiplies<>());
             return res;
         }
-        template<typename Iterable,
-                typename = std::enable_if_t<std::is_convertible<decltype(*std::begin(std::declval<Iterable>())), double>::value>>
+        template<typename Iterable>
         Matrix &operator&=(const Iterable& other) {
             std::transform(begin(), end(), other.begin(), begin(), std::multiplies<>());
             return *this;

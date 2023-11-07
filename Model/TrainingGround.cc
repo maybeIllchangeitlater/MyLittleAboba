@@ -15,22 +15,19 @@ namespace s21{
 
     void TrainingGround::Train() {
 
-        std::vector<std::thread> they_learn;
-
-        TrainPerceptrons(they_learn);
-        they_learn.clear();
-
-        TestPerceptrons(they_learn);
-        they_learn.clear();
+        TrainPerceptrons();
+        Test();
 
         if(!schedule_.save_path.empty() && (schedule_.save || schedule_.log)) {
-            FixSaveLocation();
 
-            if(schedule_.save)
-                SaveTheBestOne();
+            if(schedule_.save) {
+                size_t best = FindTheBestOne();
+                Save(best);
+            }
 
-            if(schedule_.log)
+            if(schedule_.log) {
                 SaveLog();
+            }
         }
 
     }
@@ -128,8 +125,9 @@ namespace s21{
     }
 
 
-    void TrainingGround::TrainPerceptrons(std::vector<std::thread>& they_learn) {
+    void TrainingGround::TrainPerceptrons() {
 
+        std::vector<std::thread> they_learn;
         size_t counter = 0;
 
         for(auto & aboba : abobas_){
@@ -153,10 +151,13 @@ namespace s21{
             t.join();
 
     }
-    void TrainingGround::TestPerceptrons(std::vector<std::thread> &they_learn) {
+    void TrainingGround::Test() {
+
+        std::vector<std::thread> they_learn;
 
         for(auto &aboba : abobas_){
-            auto functor = [&aboba](){ aboba->Test(); };
+            size_t test_batch_size = schedule_.test_batch_size;
+            auto functor = [&aboba, test_batch_size](){ aboba->Test(test_batch_size); };
             they_learn.emplace_back(std::move(functor));
         }
 
@@ -168,12 +169,11 @@ namespace s21{
     size_t TrainingGround::FindTheBestOne(){
 
         size_t best_ind = 0;
-        size_t correct_ans = correctness_counter.emplace_back(abobas_[0]->CorrectAnswers());
+        double correct_ans = abobas_[0]->Accuracy();
 
         for (size_t i = 1; i < abobas_.size(); ++i){
-            correctness_counter.emplace_back(abobas_[i]->CorrectAnswers());
-            if(correct_ans < correctness_counter.back()){
-                correct_ans = correctness_counter.back();
+            if(correct_ans < abobas_[i]->Accuracy()){
+                correct_ans = abobas_[i]->Accuracy();
                 best_ind = i;
             }
         }
@@ -181,28 +181,31 @@ namespace s21{
         return best_ind;
     }
 
-    void TrainingGround::SaveTheBestOne(){
+    void TrainingGround::Save(size_t index){
 
-        size_t best = FindTheBestOne();
+        FixSaveLocation();
 
-        std::string save_to(schedule_.save_path + abobas_[best]->ActivationFunctionName() + "_");
+        std::string save_to(schedule_.save_path + abobas_[index]->ActivationFunctionName() + "_");
 
-        for(const auto & t : abobas_[best]->Topology())
+        for(const auto & t : abobas_[index]->Topology())
             save_to += std::to_string(t) + "_";
 
-        save_to += "correctly_passed_" + std::to_string(abobas_[best]->CorrectAnswers()) + "tests.txt";
+        save_to += "correctly_passed_" + std::to_string(abobas_[index]->Accuracy() * 100) +
+                "%_of_" + std::to_string(std::min(schedule_.test_batch_size, dl_.MaximumTestSamples())) + "tests.txt";
 
         std::fstream file(save_to, std::ios_base::out);
 
         if(!file)
             throw std::logic_error("TraningGround: Save: specified path doesn't exist");
 
-        file << *abobas_[best];
+        file << *abobas_[index];
         file.close();
 
     }
 
     void TrainingGround::SaveLog(){
+
+        FixSaveLocation();
 
         std::string save_to(schedule_.save_path + "log.txt");
         std::fstream file(save_to, std::ios_base::out);
@@ -227,15 +230,27 @@ namespace s21{
             for(size_t e = 0; e < schedule_.epochs[p]; ++e){
 
                 file << "\tepoch: " << e << "\tlearning rate: " << c_lr << "\taverage error: " <<
-                abobas_[p]->GetAccuracy()[e] << std::endl;
+                abobas_[p]->AverageOutputGradient()[e] << std::endl;
 
                 if(schedule_.learning_rate_reduction_frequencies[p]
                 && !((e + 1) % schedule_.learning_rate_reduction_frequencies[p]))
                     c_lr -= schedule_.learning_rate_reductions[p];
 
             }
-            file << std::endl << "MLP number " << p << " correctly guessed " << correctness_counter[p]
-            << " out of " << dl_.MaximumTestsTests() << std::endl << std::endl;
+            file << "MLP number " << p << " correctly guessed " << abobas_[p]->Accuracy() * 100
+            << "% out of " << std::min(schedule_.test_batch_size, dl_.MaximumTestSamples()) << std::endl
+            <<std::endl;
+
+            for(size_t l = 0; l < dl_.Outputs(); ++l){
+                if(std::isnan(abobas_[p]->Recall()[l]))
+                    file << "Label " << l << " is not present in test set" << std::endl;
+                else {
+                    file << "For label " << l << "\tprecision is " << abobas_[p]->Precision()[l] <<
+                         "\trecall is " << abobas_[p]->Recall()[l] << "\tf1 score is " << abobas_[p]->F1Score()[l]
+                         << std::endl;
+                }
+            }
+            std::cout << std::endl;
 
         }
 
@@ -245,6 +260,34 @@ namespace s21{
         size_t fix_default = schedule_.save_path.find("TrainingGround.h");
         if(fix_default != std::string::npos)
             schedule_.save_path.erase(fix_default);
+    }
+
+    void TrainingGround::SetSavePath(const char * filepath) { schedule_.save_path = filepath; }
+    void TrainingGround::SetTestBatchSize(const size_t size) { schedule_.test_batch_size = size; }
+    void TrainingGround::SetTrainBatchSize(const size_t MLPindex, const size_t size) {
+        if(MLPindex > schedule_.perceptron_counter)
+            throw std::out_of_range("SetTrainBatchSize: index out of range");
+        schedule_.batch_sizes[MLPindex] = size;
+    }
+    void TrainingGround::SetLearningRate(const size_t MLPindex, const double lr) {
+        if(MLPindex > schedule_.perceptron_counter)
+            throw std::out_of_range("SetLearningRate: index out of range");
+        schedule_.learning_rates[MLPindex] = lr;
+    }
+    void TrainingGround::SetLearningRateReduction(const size_t MLPindex, const double reduction){
+        if(MLPindex > schedule_.perceptron_counter)
+            throw std::out_of_range("SetLearningRateReduction: index out of range");
+        schedule_.learning_rate_reductions[MLPindex] = reduction;
+    }
+    void TrainingGround::SetLearningRateReductionFrequency(const size_t MLPindex, const size_t frequency){
+        if(MLPindex > schedule_.perceptron_counter)
+            throw std::out_of_range("SetLearningRateReduction: index out of range");
+        schedule_.learning_rate_reduction_frequencies[MLPindex] = frequency;
+    }
+    void TrainingGround::SetEpochs(const size_t MLPindex, const size_t epochs){
+        if(MLPindex > schedule_.perceptron_counter)
+            throw std::out_of_range("SetEpochs: index out of range");
+        schedule_.epochs[MLPindex] = epochs;
     }
 
 
