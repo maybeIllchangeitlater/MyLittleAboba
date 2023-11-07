@@ -2,6 +2,7 @@
 #define MULTILAYERABOBATRON_MODEL_MLPCORE_H
 #include <string>
 #include <vector>
+#include <chrono>
 
 namespace s21{
     class MLPCore{ //abstract
@@ -60,6 +61,14 @@ namespace s21{
          */
         const std::vector<double>& AverageOutputGradient()const noexcept { return error_; }
         /**
+         * @brief find out how long did last training session took
+         */
+        std::chrono::seconds TrainRuntime() { return train_runtime_; }
+        /**
+         * @brief find out how long did last testing session took
+         */
+        std::chrono::seconds TestRuntime() { return test_runtime_; }
+        /**
          * @brief save MLP
          */
         friend std::ostream &operator<<(std::ostream &out, const MLPCore &other){
@@ -81,9 +90,11 @@ namespace s21{
         virtual void In(std::istream &in) = 0;
 
         double lr_;
+        double accuracy_;
+        std::chrono::seconds train_runtime_;
+        std::chrono::seconds test_runtime_;
         std::string activation_function_name_;
         std::vector<double> error_;
-        double accuracy_;
         std::vector<double> precision_;
         std::vector<double> recall_;
         std::vector<double> f1_score_;

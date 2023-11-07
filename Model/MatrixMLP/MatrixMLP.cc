@@ -68,8 +68,9 @@ namespace s21{
     }
 
 
-    void MatrixMLP::GradientDescent(double lr, size_t epochs,  size_t batch_size, double lr_reduction, size_t reduction_frequency) {
-
+    void MatrixMLP::GradientDescent(double lr, size_t epochs,  size_t batch_size,
+                                    double lr_reduction, size_t reduction_frequency) {
+        auto start = std::chrono::high_resolution_clock::now();
         lr_ = lr;
         double error = 0.0;
 
@@ -92,10 +93,13 @@ namespace s21{
                 lr_ -= lr_reduction;
             }
         }
+        train_runtime_ = std::chrono::duration_cast<std::chrono::seconds>
+                (std::chrono::high_resolution_clock::now() - start);
 
     }
 
     void MatrixMLP::Test(size_t batch_size) {
+        auto start = std::chrono::high_resolution_clock::now();
         accuracy_ = 0;
         auto test_set = dl_->CreateSample(batch_size, DataLoader::kTest);
         accuracy_ = 0;
@@ -128,7 +132,8 @@ namespace s21{
             recall_.emplace_back(true_positives[i]/(true_positives[i] + false_negatives[i]));
             f1_score_.emplace_back(2 * precision_[i] * recall_[i] / precision_[i] + recall_[i]);
         }
-
+        test_runtime_ = std::chrono::duration_cast<std::chrono::seconds>
+                (std::chrono::high_resolution_clock::now() - start);
     }
 
     size_t MatrixMLP::Predict(const std::vector<double> &in) {

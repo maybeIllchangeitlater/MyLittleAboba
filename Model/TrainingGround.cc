@@ -229,7 +229,7 @@ namespace s21{
 
             for(size_t e = 0; e < schedule_.epochs[p]; ++e){
 
-                file << "\tepoch: " << e << "\tlearning rate: " << c_lr << "\taverage error: " <<
+                file << "epoch: " << e << "\tlearning rate: " << c_lr << "\taverage error: " <<
                 abobas_[p]->AverageOutputGradient()[e] << std::endl;
 
                 if(schedule_.learning_rate_reduction_frequencies[p]
@@ -237,9 +237,11 @@ namespace s21{
                     c_lr -= schedule_.learning_rate_reductions[p];
 
             }
-            file << "MLP number " << p << " correctly guessed " << abobas_[p]->Accuracy() * 100
-            << "% out of " << std::min(schedule_.test_batch_size, dl_.MaximumTestSamples()) << std::endl
-            <<std::endl;
+            file << "It took a total of " << std::to_string(abobas_[p]->TrainRuntime().count()) << " seconds" << std::endl <<
+            "Running " << std::min(schedule_.test_batch_size, dl_.MaximumTestSamples()) <<
+            " tests aboba correctly guessed " << abobas_[p]->Accuracy() * 100
+            << "%" << std::endl << "It took a total of "
+            << std::to_string(abobas_[p]->TestRuntime().count()) << " seconds" <<std::endl;
 
             for(size_t l = 0; l < dl_.Outputs(); ++l){
                 if(std::isnan(abobas_[p]->Recall()[l]))
@@ -250,8 +252,7 @@ namespace s21{
                          << std::endl;
                 }
             }
-            std::cout << std::endl;
-
+            std::cout << std::endl << std::endl;
         }
 
     }
