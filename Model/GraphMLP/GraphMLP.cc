@@ -5,14 +5,13 @@ namespace s21 {
                        : MLPCore(dl), gen_(std::random_device()()){
         activation_function_name_ = activation_function;
         GetActivationFunction();
-
+        layers_.emplace_back(topology[0]);
         for(size_t i = 0; i < topology.size() - 1; ++i){
             //initialize layer weights with small random values
             //using Xavier initialization
             //initial biases are 0s
             layers_.emplace_back(topology[i], topology[i + 1], gen_);
         }
-        layers_.emplace_back();
     }
 
     void GraphMLP::FeedForward(const std::vector<double> &in) {
@@ -20,13 +19,22 @@ namespace s21 {
         layers_[0].SetInputLayer(in);
 
         for(size_t i = 0; i < layers_.size() - 1; ++i) {
-            for (size_t n = 0; n < layers_[i].Size(); ++n) {
+            for (size_t n = 0; n < layers_[i + 1].Size(); ++n) {
                 GLayer::GNode &neuron = layers_[i + 1][n];
                 neuron.output = 0;
-                for (size_t d = 0; d < layers_[i][n].weight.size(); ++d) {
-                    neuron.output *= layers_[i][n].weight[d];
+//                for(size_t w = 0; w < neuron.weight.size(); ++w){
+//                    neuron.output += neuron.weight[w] * layers_[i][w].activated_output;
+//                }
+                //add bias
+//                neuron.activated_output = activation_(neuron.output);
+//                for (size_t w = 0; w < layers_[i][n].weight.size(); ++w) {
+//                    neuron.output = layers_[i][n].activated_output
+//                            * layers_[i][n].weight[w];
+//                }
+                for(size_t p_n = 0; p_n < layers_[i].Size(); ++p_n){
+                    neuron.output += neuron.weight[p_n] * layers_[i][p_n].activated_output;
                 }
-                neuron.output += layers_[i][n].bias;
+//                neuron.output += layers_[i][n].bias;
                 if (i < layers_.size() - 2)
                     neuron.activated_output = activation_(neuron.output);
             }
@@ -41,26 +49,27 @@ namespace s21 {
 
     void GraphMLP::BackPropogation(const std::vector<double> &ideal) {
 
-        for(size_t n = 0; n < layers_[layers_.size() - 2].Size(); ++n){
-            layers_[layers_.size() - 2][n].error = layers_.back()[n].activated_output - ideal[n];
+        for(size_t n = 0; n < layers_.back().Size(); ++n){
+            layers_.back()[n].error = layers_.back()[n].activated_output - ideal[n];
         }
         //dZ = a - Y
-        for(std::ptrdiff_t i = layers_.size() - 3; i >=0; --i){
+        for(std::ptrdiff_t i = layers_.size() - 2; i > 0; --i){
             layers_[i].CalculateError(layers_[i + 1], activation_derivative_);
             //dZi = dZi+1 * W.T hadamard product with ActDeriv(Zi) python - dZi = dZi+i.dot(W.T) * ActDeriv(Zi)
         }
 
-//        UpdateWeights();
+        UpdateWeights();
 
     }
 
     void GraphMLP::UpdateWeights() {
-        for (size_t i = 0; i < layers_.size() - 1; ++i)
-            layers_[i].UpdateWeights(lr_);
+        for (size_t i = 1; i < layers_.size(); ++i)
+            layers_[i].UpdateWeights(layers_[i-1],lr_);
     }
 
     std::vector<size_t> GraphMLP::Topology() const noexcept{
         std::vector<size_t> res;
+        res.reserve(layers_.size());
         for(const auto& v: layers_)
             res.emplace_back(v.Size());
         return res;

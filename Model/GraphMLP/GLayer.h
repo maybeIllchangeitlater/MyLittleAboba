@@ -9,15 +9,16 @@ class GLayer {
 public:
 
     struct GNode {
-        double output;
-        double activated_output;
-        double error;
+        double output = 0;
+        double activated_output = 0;
+        double error = 0;
         double bias = 0.0;
         std::vector<double> weight;
     };
 
     GLayer() = default;
-    explicit GLayer(size_t size, size_t n_size, std::mt19937& gen);
+    explicit GLayer(size_t p_size, size_t size, std::mt19937& gen);
+    explicit GLayer(size_t size) { layer_.resize(size); };
     GLayer(const GLayer &) = default;
     GLayer(GLayer &&) = default;
     GLayer &operator=(const GLayer &) = default;
@@ -29,7 +30,7 @@ public:
     void SetInputLayer(const std::vector<double> &in);
     void CalcOutputLayerActivatedOutput();
     void CalculateError(const GLayer &next_layer, double(*afd)(double));
-    void UpdateWeights(const double lr);
+    void UpdateWeights(const GLayer &prev_layer, const double lr);
 
     GNode &operator[](size_t i) { return layer_[i]; }
     const GNode &operator[](size_t i) const { return layer_[i]; }
