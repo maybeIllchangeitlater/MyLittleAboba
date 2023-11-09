@@ -77,6 +77,7 @@ namespace s21 {
             return exp_x / (exp_x.Sum());
         }
 
+
         static const std::unordered_map<std::string, std::pair<double (*)(double), double (*)(double)>> activations_activation_derivatives;
 
     };

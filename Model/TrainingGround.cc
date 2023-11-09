@@ -41,7 +41,7 @@ namespace s21{
                 size_t model_t;
                 file >> model_t;
 
-                abobas_.emplace_back(ConstructModel(static_cast<TrainingConfig::MLPType>(model_t), &dl_));
+                abobas_.emplace_back(ConstructModel(static_cast<MLPCore::MLPType>(model_t), &dl_));
 
                 file >> *abobas_.back();
 

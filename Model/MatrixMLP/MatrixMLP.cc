@@ -4,7 +4,7 @@
 namespace s21{
 
     MatrixMLP::MatrixMLP(std::vector<size_t> topology, DataLoader * dl, const char* activation_function_name)
-    : dl_(dl),gen_(std::random_device()()) {
+    : MLPCore(dl),gen_(std::random_device()()) {
 
         activation_function_name_ = activation_function_name;
         GetActivationFunction();
@@ -46,7 +46,7 @@ namespace s21{
             layers_[i].error_ = layers_[i + 1].error_.MulByTransposed(layers_[i + 1].weights_);
             Matrix der = layers_[i + 1].outputs_.Transform(activation_derivative_);
             layers_[i].error_ &= der;
-            //dZi = dZi+1 * W.T hadamard product with ActDeriv(Zi) python - dZi = dZi+i.dot(W.T) * ActDeriv(Zi)
+            //dZi = dZi+1 * W.T hadamard product with ActDeriv(Zi) python - dZi = dZi+1.dot(W.T) * ActDeriv(Zi)
         }
 
         UpdateWeights();
@@ -67,94 +67,6 @@ namespace s21{
 
     }
 
-
-    void MatrixMLP::GradientDescent(double lr, size_t epochs,  size_t batch_size,
-                                    double lr_reduction, size_t reduction_frequency) {
-        auto start = std::chrono::high_resolution_clock::now();
-        lr_ = lr;
-        double error = 0.0;
-
-        for (size_t e = 0; e < epochs; ++e) {
-            auto batch = dl_->CreateSample(batch_size);
-            batch_size = batch.size();
-
-            for (size_t b = 0; b < batch_size; ++b) {
-                FeedForward(batch[b].second);
-                std::vector<double> ideal(dl_->Outputs(), 0);
-                ideal[batch[b].first] = 1;
-                BackPropogation(ideal);
-                error += GetError(ideal);
-            }
-
-            error_.push_back(error/batch_size);
-            error = 0.0;
-
-            if (reduction_frequency && !((e + 1) % reduction_frequency)) {
-                lr_ -= lr_reduction;
-            }
-        }
-        train_runtime_ = std::chrono::duration_cast<std::chrono::seconds>
-                (std::chrono::high_resolution_clock::now() - start);
-
-    }
-
-    void MatrixMLP::Test(size_t batch_size) {
-        auto start = std::chrono::high_resolution_clock::now();
-        accuracy_ = 0;
-        auto test_set = dl_->CreateSample(batch_size, DataLoader::kTest);
-        accuracy_ = 0;
-        precision_.clear();
-        recall_.clear();
-        f1_score_.clear();
-        std::vector<double> true_positives(dl_->Outputs(), 0);
-        std::vector<double> false_positives(dl_->Outputs(), 0);
-        std::vector<double> false_negatives(dl_->Outputs(), 0);
-        size_t predicted_label;
-        bool correct;
-
-        for(const auto& [label, data] : test_set) {
-                predicted_label = Predict(data);
-                correct = (predicted_label == label);
-                if(correct){
-                    ++accuracy_;
-                    ++true_positives[label];
-                }else{
-                    ++false_positives[predicted_label];
-                    ++false_negatives[label];
-                }
-
-        }
-
-        accuracy_ /= test_set.size();
-
-        for(size_t i = 0; i < dl_->Outputs(); ++i){
-            precision_.emplace_back(true_positives[i]/(true_positives[i] + false_positives[i]));
-            recall_.emplace_back(true_positives[i]/(true_positives[i] + false_negatives[i]));
-            f1_score_.emplace_back(2 * precision_[i] * recall_[i] / precision_[i] + recall_[i]);
-        }
-        test_runtime_ = std::chrono::duration_cast<std::chrono::seconds>
-                (std::chrono::high_resolution_clock::now() - start);
-    }
-
-    size_t MatrixMLP::Predict(const std::vector<double> &in) {
-        FeedForward(in);
-        return GetAnswer();
-    }
-
-
-    void MatrixMLP::GetActivationFunction() {
-
-        std::transform(activation_function_name_.begin(), activation_function_name_.end(), activation_function_name_.begin(),
-                       [](char c){ return std::tolower(c); }); //to lowercase
-
-        activation_function_name_.erase(std::remove_if(activation_function_name_.begin(), activation_function_name_.end(),
-                                                  [](char c){ return (std::isspace(c) || c == '_' || c == '\n'); }),
-                                   activation_function_name_.end()); //remove whitespaces _ and newlines
-
-        activation_ = ActivationFunction::activations_activation_derivatives.at(activation_function_name_).first;
-        activation_derivative_ = ActivationFunction::activations_activation_derivatives.at(activation_function_name_).second;
-
-    }
 
     void MatrixMLP::Out(std::ostream &out) const{
 
@@ -205,7 +117,7 @@ namespace s21{
         layers_.emplace_back();
     }
 
-    std::vector<size_t> MatrixMLP::Topology(){
+    std::vector<size_t> MatrixMLP::Topology() const noexcept{
         std::vector<size_t> res;
         for(const auto& v: layers_)
             res.emplace_back(v.outputs_.Size());
@@ -213,21 +125,13 @@ namespace s21{
     }
 
 
-    double MatrixMLP::GetError(const std::vector<double>& ideal){
-        return (layers_.back().activated_outputs_ - ideal).Abs().Sum()
-               /static_cast<double>(layers_.back().activated_outputs_.Size());
+    double MatrixMLP::GetError(const std::vector<double>& ideal) const{
+        return std::sqrt((layers_.back().activated_outputs_ - ideal).Pow2().Sum()
+               /static_cast<double>(layers_.back().activated_outputs_.Size()));
     }
 
 
-    bool MatrixMLP::WasRight(const std::vector<double> &ideal) {
-        size_t i = 0;
-        for (; i < ideal.size() && !ideal[i]; ++i){}
-
-        size_t ans = GetAnswer();
-        return ans == i;
-    }
-
-    size_t MatrixMLP::GetAnswer(){
+    size_t MatrixMLP::GetAnswer() const{
         double max = 0.0;
         size_t max_i = 0;
         for (size_t i = 0; i < layers_.back().activated_outputs_.Cols(); ++i) {

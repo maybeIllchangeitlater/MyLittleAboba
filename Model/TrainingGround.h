@@ -3,6 +3,7 @@
 #include <thread>
 #include "MLPCore.h"
 #include "MatrixMLP/MatrixMLP.h"
+#include "GraphMLP/GraphMLP.h"
 #include "Dataloader.h"
 #include <ostream>
 
@@ -33,14 +34,13 @@ namespace s21{
          */
     struct TrainingConfig {
 
-        using MLPType = MLPCore::MLPType;
         constexpr static const size_t kDefaultEpochs = 5;
         constexpr static const char* kDefaultActivator = "sigmoid";
         constexpr static const double kDefaultLR = 0.031;
         constexpr static const double kDefaultLRReductionRate = 0.0;
         constexpr static const size_t kDefaultLRReductionFrequency = 0;
         constexpr static const size_t kDefaultBatchSize = SIZE_T_MAX;
-        constexpr static const MLPType kDefaultMLPType = MLPType::kMatrix;
+        constexpr static const MLPCore::MLPType kDefaultMLPType = MLPCore::MLPType::kMatrix;
 
         bool load = false;
         bool log = true;
@@ -49,7 +49,7 @@ namespace s21{
         size_t test_batch_size = SIZE_T_MAX;
         std::string save_path = __FILE__;
         std::vector<const char *> load_path;
-        std::vector<MLPType> mlp_types;
+        std::vector<MLPCore::MLPType> mlp_types;
         std::vector<const char *> activation_functions;
         std::vector<double> learning_rates;
         std::vector<double> learning_rate_reductions;
@@ -97,16 +97,15 @@ namespace s21{
          * @return allocated and constructed * to model\nImportant Allocates memory DO NOT DISCARD
          */
         template<typename ... Args>
-        [[nodiscard]]MLPCore* ConstructModel(TrainingConfig::MLPType, Args&&... args){
+        [[nodiscard]]MLPCore* ConstructModel(MLPCore::MLPType type, Args&&... args){
 
-            MLPCore * model;
-            model = new MatrixMLP(std::forward<Args>(args)...);
+            MLPCore * model = nullptr;
 
-//            if(type == TrainingConfig::kMatrix){
-//                model = new s21::MatrixMLP(std::forward<Args>(args)...);
-//            }else if(type == TrainingConfig::kGraph){
-//                model = ::new MatrixMLP(std::forward<Args>(args)...);
-//            }
+            if(type == MLPCore::kMatrix){
+                model = new MatrixMLP(std::forward<Args>(args)...);
+            }else if(type == MLPCore::kGraph){
+                model = ::new GraphMLP(std::forward<Args>(args)...);
+            }
 
             return model;
 

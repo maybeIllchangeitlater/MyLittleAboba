@@ -191,6 +191,7 @@ namespace s21 {
         Matrix Exp() const { return Transform(std::exp); }
         double Sum() const noexcept{ return std::accumulate(begin(), end(), 0.0); }
         Matrix Abs() const { return Transform(std::fabs); }
+        Matrix Pow2() const { return Transform([](double x){ return x * x; }); }
 
 
         Matrix Transform(double(*foo)(double)) const{
