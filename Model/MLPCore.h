@@ -61,9 +61,9 @@ namespace s21{
           */
          const std::vector<double>& F1Score() const noexcept { return f1_score_; }
         /**
-         * @brief average output layer gradient per epoch
+         * @brief output layer error per epoch
          */
-        const std::vector<double>& AverageOutputGradient()const noexcept { return error_; }
+        const std::vector<double>& OutputError()const noexcept { return error_; }
         /**
          * @brief find out how long did last training session took
          */
@@ -127,6 +127,6 @@ namespace s21{
         std::vector<double> recall_;
         std::vector<double> f1_score_;
     };
-}
+} // s21
 
 #endif //MULTILAYERABOBATRON_MODEL_MLPCORE_H

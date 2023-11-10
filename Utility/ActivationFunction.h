@@ -82,5 +82,5 @@ namespace s21 {
 
     };
 
-}
+} // s21
 #endif //MULTILAYERABOBATRON_UTILS_ACTIVATION_FUNCTION_H_

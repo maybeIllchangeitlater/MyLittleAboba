@@ -10,9 +10,6 @@ namespace s21{
         GetActivationFunction();
 
         for(size_t i = 0; i < topology.size() - 1; ++i){
-            //initialize layer weights with small random values
-            //using Xavier initialization
-            //initial biases are 0s
             layers_.emplace_back(Matrix(topology[i], topology[i + 1], gen_,
                                            0.0, (2.0/std::sqrt(topology[i] * topology[i + 1]))),
                                  Matrix(1, topology[i + 1]));
@@ -76,7 +73,7 @@ namespace s21{
         out << layers_.size() << " ";
 
         for(const auto & l : layers_) {
-            out << l.activated_outputs_.Cols() << " "; //save topology
+            out << l.activated_outputs_.Cols() << " ";
         }
 
         for(const auto& layer : layers_){

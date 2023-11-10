@@ -234,5 +234,5 @@ namespace s21 {
         size_t rows_, cols_;
         double **matrix_;
     };
-}  // namespace S21
+}  // s21
 #endif //MULTILAYERABOBATRON_UTILS_MATRIX_H_

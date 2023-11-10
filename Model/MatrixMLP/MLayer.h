@@ -16,5 +16,5 @@ namespace s21 {
         Matrix error_;
         Matrix outputs_;
     };
-}
+} //s21
 #endif //MULTILAYERABOBATRON_MODEL_MATRIXMLP_MLAYER_H_

@@ -230,7 +230,7 @@ namespace s21{
             for(size_t e = 0; e < schedule_.epochs[p]; ++e){
 
                 file << "epoch: " << e << "\tlearning rate: " << c_lr << "\taverage error: " <<
-                abobas_[p]->AverageOutputGradient()[e] << std::endl;
+                abobas_[p]->OutputError()[e] << std::endl;
 
                 if(schedule_.learning_rate_reduction_frequencies[p]
                 && !((e + 1) % schedule_.learning_rate_reduction_frequencies[p]))

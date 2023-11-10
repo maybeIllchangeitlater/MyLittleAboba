@@ -130,7 +130,7 @@ namespace s21{
 
     };
 
-}
+} // s21
 
 
 #endif //MULTILAYERABOBATRON_MODEL_TRAININGGROUND_H_

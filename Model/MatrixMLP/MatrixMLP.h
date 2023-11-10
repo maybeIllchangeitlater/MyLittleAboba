@@ -46,6 +46,6 @@ namespace s21 {
         std::mt19937 gen_;
 
     };
-}
+} // s21
 
 #endif //MULTILAYERABOBATRON_MODEL_MATRIXMLP_MATRIXMLP_H_

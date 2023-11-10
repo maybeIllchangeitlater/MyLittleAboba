@@ -7,9 +7,6 @@ namespace s21 {
         GetActivationFunction();
         layers_.emplace_back(topology[0]);
         for(size_t i = 0; i < topology.size() - 1; ++i){
-            //initialize layer weights with small random values
-            //using Xavier initialization
-            //initial biases are 0s
             layers_.emplace_back(topology[i], topology[i + 1], gen_);
         }
     }
@@ -22,19 +19,10 @@ namespace s21 {
             for (size_t n = 0; n < layers_[i + 1].Size(); ++n) {
                 GLayer::GNode &neuron = layers_[i + 1][n];
                 neuron.output = 0;
-//                for(size_t w = 0; w < neuron.weight.size(); ++w){
-//                    neuron.output += neuron.weight[w] * layers_[i][w].activated_output;
-//                }
-                //add bias
-//                neuron.activated_output = activation_(neuron.output);
-//                for (size_t w = 0; w < layers_[i][n].weight.size(); ++w) {
-//                    neuron.output = layers_[i][n].activated_output
-//                            * layers_[i][n].weight[w];
-//                }
                 for(size_t p_n = 0; p_n < layers_[i].Size(); ++p_n){
                     neuron.output += neuron.weight[p_n] * layers_[i][p_n].activated_output;
                 }
-//                neuron.output += layers_[i][n].bias;
+                neuron.output += neuron.bias;
                 if (i < layers_.size() - 2)
                     neuron.activated_output = activation_(neuron.output);
             }
@@ -105,7 +93,7 @@ namespace s21 {
         out << layers_.size() << " ";
 
         for(const auto & l : layers_) {
-            out << l.Size() << " "; //save topology
+            out << l.Size() << " ";
         }
 
         for(const auto& layer : layers_){

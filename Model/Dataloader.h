@@ -73,5 +73,5 @@ class DataLoader {
   std::mutex mutex_;
   std::mt19937 gen_;
 };
-}  // namespace s21
+}  // s21
 #endif  // MULTILAYERABOBATRON_MODEL_DATALOADER_H_
