@@ -1,6 +1,7 @@
 #ifndef MULTILAYERABOBATRON_MODEL_DATALOADER_H_
 #define MULTILAYERABOBATRON_MODEL_DATALOADER_H_
 
+#include <QPixmap>
 #include <fstream>
 #include <iostream>
 #include <random>
@@ -12,6 +13,8 @@ namespace s21 {
 class DataLoader {
  public:
   enum Mode { kTest, kTrain };
+
+  DataLoader() : gen_(std::random_device()()) {}
   /**
    *
    * @param inputs amount of neurons in input layer
@@ -33,6 +36,11 @@ class DataLoader {
       const noexcept {
     return test_data_;
   }
+  /**
+   * @param pixmap
+   * @return normalized data for MLP
+   */
+  std::vector<double> PicToData(QPixmap& pixmap);
   /**
    * @brief loads dataset(entire dataset)
    * @param filepath path to dataset
@@ -63,15 +71,19 @@ class DataLoader {
    */
   size_t Outputs() const noexcept { return out_; }
 
+  void SetInputs(size_t val) noexcept { in_ = val; }
+
+  void SetOutputs(size_t val) noexcept { out_ = val; }
+
  private:
   size_t in_;
   size_t out_;
-    size_t test_samples_;
-    size_t train_samples_;
+  size_t test_samples_;
+  size_t train_samples_;
   std::unordered_map<size_t, std::vector<std::vector<double>>> data_;
   std::unordered_map<size_t, std::vector<std::vector<double>>> test_data_;
   std::mutex mutex_;
   std::mt19937 gen_;
 };
-}  // s21
+}  // namespace s21
 #endif  // MULTILAYERABOBATRON_MODEL_DATALOADER_H_

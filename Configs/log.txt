@@ -1,0 +1,72 @@
+MLP number 0 of graph model type with activation function elu and topology of: 784 256 26 
+Performance over 5 epochs:
+epoch: 0	learning rate: 0.016	average error: 0.0877331
+epoch: 1	learning rate: 0.013	average error: 0.0613593
+epoch: 2	learning rate: 0.01	average error: 0.0501391
+epoch: 3	learning rate: 0.007	average error: 0.0415724
+epoch: 4	learning rate: 0.004	average error: 0.0349082
+It took a total of 174 seconds
+Running 14800 tests aboba correctly guessed 84.8881%
+It took a total of 3 seconds
+For label 0	precision is 0.834403	recall is 0.8125	f1 score is 2.4375
+For label 1	precision is 0.900773	recall is 0.87375	f1 score is 2.62125
+For label 2	precision is 0.952045	recall is 0.84375	f1 score is 2.53125
+For label 3	precision is 0.937838	recall is 0.8675	f1 score is 2.6025
+For label 4	precision is 0.837046	recall is 0.8925	f1 score is 2.6775
+For label 5	precision is 0.966759	recall is 0.8725	f1 score is 2.6175
+For label 6	precision is 0.743421	recall is 0.70625	f1 score is 2.11875
+For label 7	precision is 0.920981	recall is 0.845	f1 score is 2.535
+For label 8	precision is 0.716152	recall is 0.75375	f1 score is 2.26125
+For label 9	precision is 0.943005	recall is 0.91	f1 score is 2.73
+For label 10	precision is 0.948207	recall is 0.8925	f1 score is 2.6775
+For label 11	precision is 0.726592	recall is 0.7275	f1 score is 2.1825
+For label 12	precision is 0.965866	recall is 0.955	f1 score is 2.865
+For label 13	precision is 0.60223	recall is 0.830769	f1 score is 2.49231
+For label 14	precision is 0.857143	recall is 0.915493	f1 score is 2.74648
+For label 15	precision is 0.88145	recall is 0.961948	f1 score is 2.88584
+For label 16	precision is 0.764631	recall is 0.75125	f1 score is 2.25375
+For label 17	precision is 0.933155	recall is 0.8725	f1 score is 2.6175
+For label 18	precision is 0.851163	recall is 0.915	f1 score is 2.745
+Label 19 is not present in test set
+Label 20 is not present in test set
+Label 21 is not present in test set
+Label 22 is not present in test set
+Label 23 is not present in test set
+Label 24 is not present in test set
+Label 25 is not present in test set
+MLP number 1 of matrix model type with activation function elu and topology of: 784 128 128 26 
+Performance over 5 epochs:
+epoch: 0	learning rate: 0.016	average error: 0.10653
+epoch: 1	learning rate: 0.013	average error: 0.0696145
+epoch: 2	learning rate: 0.01	average error: 0.0568343
+epoch: 3	learning rate: 0.007	average error: 0.0468287
+epoch: 4	learning rate: 0.004	average error: 0.0389923
+It took a total of 212 seconds
+Running 14800 tests aboba correctly guessed 83.7476%
+It took a total of 2 seconds
+For label 0	precision is 0.828648	recall is 0.77375	f1 score is 2.32125
+For label 1	precision is 0.879487	recall is 0.8575	f1 score is 2.5725
+For label 2	precision is 0.921751	recall is 0.86875	f1 score is 2.60625
+For label 3	precision is 0.953911	recall is 0.85375	f1 score is 2.56125
+For label 4	precision is 0.846344	recall is 0.85375	f1 score is 2.56125
+For label 5	precision is 0.921392	recall is 0.89375	f1 score is 2.68125
+For label 6	precision is 0.820034	recall is 0.60375	f1 score is 1.81125
+For label 7	precision is 0.881215	recall is 0.7975	f1 score is 2.3925
+For label 8	precision is 0.700231	recall is 0.75625	f1 score is 2.26875
+For label 9	precision is 0.946053	recall is 0.89875	f1 score is 2.69625
+For label 10	precision is 0.938992	recall is 0.885	f1 score is 2.655
+For label 11	precision is 0.733681	recall is 0.7025	f1 score is 2.1075
+For label 12	precision is 0.957606	recall is 0.96	f1 score is 2.88
+For label 13	precision is 0.580756	recall is 0.866667	f1 score is 2.6
+For label 14	precision is 0.72232	recall is 0.964789	f1 score is 2.89437
+For label 15	precision is 0.891775	recall is 0.940639	f1 score is 2.82192
+For label 16	precision is 0.722838	recall is 0.815	f1 score is 2.445
+For label 17	precision is 0.942387	recall is 0.85875	f1 score is 2.57625
+For label 18	precision is 0.878412	recall is 0.885	f1 score is 2.655
+Label 19 is not present in test set
+Label 20 is not present in test set
+Label 21 is not present in test set
+Label 22 is not present in test set
+Label 23 is not present in test set
+Label 24 is not present in test set
+Label 25 is not present in test set
