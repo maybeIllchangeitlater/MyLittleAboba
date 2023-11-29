@@ -35,7 +35,7 @@ class MLPController {
    */
   void LoadAboba(const std::string& path) {
     auto newboys = build_.LoadMLP(path);
-    tg_.GetMLPs().insert(tg_.GetMLPs().end(), newboys.begin(), newboys.end());
+    tg_.GetMLPs().emplace_back(newboys.back());
   }
   void Save(const size_t MLPindex) { tg_.Save(MLPindex); }
   /**

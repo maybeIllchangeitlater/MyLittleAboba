@@ -1,4 +1,4 @@
-#include "Glayer.h"
+#include "GLayer.h"
 
 namespace s21 {
 

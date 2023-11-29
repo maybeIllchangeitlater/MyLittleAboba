@@ -2,7 +2,7 @@
 #define MULTILAYERABOBATRON_MODEL_GRAPHMLP_GRAPHMLP_H_
 #include "../Dataloader.h"
 #include "../MLPCore.h"
-#include "Glayer.h"
+#include "GLayer.h"
 
 namespace s21 {
 
